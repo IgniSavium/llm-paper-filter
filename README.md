@@ -1,4 +1,4 @@
-# 📚LLM-Paper-Finder
+# 📚LLM-Paper-Filter
 
 An automated, LLM-driven pipeline designed to sift through the daily avalanche of AI research papers. 
 
