@@ -1,0 +1,28 @@
+==Specific Ignore Patterns===
+daily_arxiv/all_papers
+daily_arxiv/hits
+daily_arxiv/hits_zh
+
+===Common Ignore Patterns===
+# Python 缓存和虚拟环境
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env/
+
+# 环境变量和敏感信息 (非常重要，防止 API Key 泄露！)
+.env
+config.json
+keys.json
+
+# 日志和大型数据文件
+*.log
+*.sqlite3
+/data/
+/models/  # 如果你有本地下载的 huggingface 权重
+
+# IDE 配置
+.vscode/
+.idea/
