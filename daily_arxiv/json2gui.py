@@ -15,7 +15,7 @@ if uploaded_file is not None:
     meta = data.get("metadata", {})
     
     # 显示概览信息
-    st.info(f"**📅 日期:** {meta.get('target_date')} | **📊 高价值论文:** {meta.get('total_hits')} 篇")
+    st.info(f"**📅 日期:** {meta.get('target_date')} | **📊 相关论文:** {meta.get('total_hits')} 篇")
     
     # 遍历显示每一篇论文
     for i, paper in enumerate(data.get("hits_zh", [])):
