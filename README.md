@@ -94,6 +94,8 @@ The JSON must strictly follow this schema:
 
 ⬜ Change LLM model version for best performance.
 
-⬜ Build GUI for better reading.
+✅ Build GUI for better reading.
+
+⬜ Include affiliations  and citations during filtering.
 
 ⬜ Support major AI conferences (e.g., ICLR, NeurIPS, ICML, ACL).
