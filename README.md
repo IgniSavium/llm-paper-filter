@@ -14,7 +14,8 @@ Currently, this repository features `daily_arxiv_filter.py`, a high-throughput t
     ├── all_papers/            # Stores the full evaluation logs of all fetched papers
     ├── hits/                  # Stores the filtered "high-value" papers (Score >= threshold)
     ├── hits_zh/               # Stores the translated Chinese versions of the hits
-    ├── json2gui.py            # Make a local GUI to show json file in hits_zh/
+    ├── html_reports/          # Store the HTML GUI
+    ├── json2gui.py            # Make a local streamlit GUI to show json file in hits_zh/
     └── daily_arxiv_filter.py  # The core execution script
 ```
 
@@ -96,7 +97,7 @@ pip install streamlit
 streamlit run llm-paper-filter/daily_arxiv/json2gui.py
 ```
 
-By using `streamlit run` in your PC,  you can get a GUI for daily arxiv json file in the `llm-paper-filter/daily_arxiv/hits_zh` folder.
+By using `streamlit run` in your PC,  you can get a GUI for daily arxiv json file in the `llm-paper-filter/daily_arxiv/hits_zh` folder, or you can find html GUI in `daily_arxiv/html_reports` folder.
 
 ![image-20260410174253479](./imgs/streamlit_arxiv_gui.png)
 

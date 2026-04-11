@@ -63,8 +63,9 @@ Reason: {reason}
 
 # ==================== Module 1: Fetching ====================
 
-def fetch_papers_by_date(target_date_str=None, buffer_limit=1000) -> tuple:
-    """Optimized fetch using arXiv's native date querying API."""
+def fetch_papers_by_date(target_date_str=None, buffer_limit=1000, max_retries=3, retry_delay=5) -> tuple:
+    """Optimized fetch using arXiv's native date querying API with retry mechanism."""
+    import time
     
     if target_date_str is None:
         # Default to UTC "yesterday"
@@ -87,32 +88,38 @@ def fetch_papers_by_date(target_date_str=None, buffer_limit=1000) -> tuple:
     )
     
     client = arxiv.Client()
-    papers = []
     
-    try:
-        for paper in client.results(search):
-            paper_date = paper.published.date()
-            
-            # Double Check for defensive programming (arXiv API occasionally returns slight time offsets)
-            if paper_date == target_date:
-                papers.append({
-                    "title": paper.title,
-                    "authors": [author.name for author in paper.authors],
-                    "abstract": paper.summary.replace('\n', ' '),
-                    "url": paper.entry_id,
-                    "date": paper.published.strftime("%Y-%m-%d %H:%M:%S UTC")
-                })
-            elif paper_date < target_date:
-                # Keep truncation logic as a safety measure, though usually not triggered
-                print(f"      -> Encountered earlier date ({paper_date}), stopping fetch.")
-                break
+    for attempt in range(max_retries):
+        papers = []
+        try:
+            for paper in client.results(search):
+                paper_date = paper.published.date()
+                
+                # Double Check for defensive programming (arXiv API occasionally returns slight time offsets)
+                if paper_date == target_date:
+                    papers.append({
+                        "title": paper.title,
+                        "authors": [author.name for author in paper.authors],
+                        "abstract": paper.summary.replace('\n', ' '),
+                        "url": paper.entry_id,
+                        "date": paper.published.strftime("%Y-%m-%d %H:%M:%S UTC")
+                    })
+                elif paper_date < target_date:
+                    # Keep truncation logic as a safety measure, though usually not triggered
+                    print(f"      -> Encountered earlier date ({paper_date}), stopping fetch.")
+                    break
 
-        print(f"Fetch complete: {len(papers)} AI-related updates found for {target_date}.")
-        return papers, str(target_date)
-        
-    except Exception as e:
-        print(f"Fetch failed: {e}")
-        return [], str(target_date)
+            print(f"Fetch complete: {len(papers)} AI-related updates found for {target_date}.")
+            return papers, str(target_date)
+            
+        except Exception as e:
+            print(f"Fetch failed on attempt {attempt + 1}/{max_retries}: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Fetch failed completely.")
+                return [], str(target_date)
 
 # ==================== Module 2: LLM Parsing ====================
 
@@ -208,6 +215,101 @@ def translate_hits(hits: list, llm: LLM, tokenizer):
         
     return translated_hits
 
+# ==================== Module 5: Mobile HTML Report ====================
+
+def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
+    """Generate a mobile-friendly HTML report for the filtered papers."""
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ArXiv 推荐: {target_date_str}</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; padding: 15px; max-width: 600px; margin: auto; background-color: #f4f4f9; color: #333; }}
+            h2 {{ text-align: center; color: #2c3e50; font-size: 1.4em; border-bottom: 2px solid #ddd; padding-bottom: 10px; }}
+            .paper-card {{ background: #fff; padding: 16px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+            .badges {{ margin-bottom: 12px; }}
+            .badge-cat {{ display: inline-block; padding: 4px 8px; background: #3498db; color: #fff; border-radius: 6px; font-size: 0.8em; font-weight: bold; }}
+            .badge-score {{ display: inline-block; padding: 4px 8px; background: #e74c3c; color: #fff; border-radius: 6px; font-size: 0.8em; font-weight: bold; margin-left: 6px; }}
+            .zh-title {{ font-size: 1.15em; color: #2c3e50; font-weight: bold; margin-bottom: 6px; }}
+            .en-title {{ font-size: 0.9em; color: #7f8c8d; margin-bottom: 10px; line-height: 1.4; }}
+            .authors {{ font-size: 0.85em; color: #95a5a6; margin-bottom: 12px; font-style: italic; word-wrap: break-word; }}
+            .reason {{ background: #fff8e1; padding: 12px; border-left: 4px solid #f1c40f; border-radius: 4px; font-size: 0.95em; margin-bottom: 12px; color: #5d4037; }}
+            
+            /* 摘要折叠面板样式 */
+            .abstract-group {{ margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }}
+            .abstract-toggle {{ cursor: pointer; font-size: 0.9em; font-weight: bold; padding: 5px 0; outline: none; }}
+            .toggle-zh {{ color: #2980b9; }}
+            .toggle-en {{ color: #8e44ad; }} /* 英文摘要按钮用紫色区分 */
+            .abstract-content {{ font-size: 0.9em; color: #555; background: #f9f9f9; padding: 10px; border-radius: 6px; margin-top: 5px; }}
+            .en-text {{ font-family: "Georgia", serif; line-height: 1.5; }} /* 英文内容换一种衬线字体，更适合学术阅读 */
+            
+            .link-btn {{ display: block; text-align: center; margin-top: 15px; padding: 10px; background: #2ecc71; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.95em; }}
+            .link-btn:active {{ background: #27ae60; }}
+        </style>
+    </head>
+    <body>
+        <h2>📚 ArXiv 每日高价值论文<br><span style="font-size: 0.7em; color: #7f8c8d;">{target_date_str}</span></h2>
+    """
+
+    if not translated_hits:
+        html_content += '<div class="paper-card" style="text-align: center; color: #7f8c8d;">今日无符合阈值的高价值论文。</div>'
+    else:
+        for paper in translated_hits:
+            eval_data = paper.get('eval', {})
+            cat = eval_data.get('category', 'None')
+            score = eval_data.get('relevance_score', 0)
+            title = paper.get('title', '')
+            zh_title = paper.get('zh_title', title)
+            authors = ", ".join(paper.get('authors', []))
+            reason = eval_data.get('zh_reason', eval_data.get('reason', '无推荐理由'))
+            
+            # 提取中英文摘要
+            zh_abstract = paper.get('zh_abstract', '无中文翻译摘要')
+            en_abstract = paper.get('abstract', 'No English abstract available.')
+
+            html_content += f"""
+            <div class="paper-card">
+                <div class="badges">
+                    <span class="badge-cat">{cat}</span>
+                    <span class="badge-score">Score: {score}/5</span>
+                </div>
+                <div class="zh-title">{zh_title}</div>
+                <div class="en-title">{title}</div>
+                <div class="authors">{authors}</div>
+                <div class="reason"><strong>💡 推荐理由：</strong><br>{reason}</div>
+                
+                <div class="abstract-group">
+                    <details>
+                        <summary class="abstract-toggle toggle-zh">展开中文摘要</summary>
+                        <div class="abstract-content">{zh_abstract}</div>
+                    </details>
+                    
+                    <details>
+                        <summary class="abstract-toggle toggle-en">Read English Abstract</summary>
+                        <div class="abstract-content en-text">{en_abstract}</div>
+                    </details>
+                </div>
+                
+                <a href="{paper.get('url', '#')}" class="link-btn" target="_blank">前往 arXiv 原文</a>
+            </div>
+            """
+
+    html_content += """
+    </body>
+    </html>
+    """
+
+    html_dir = os.path.join(save_dir, "html_reports")
+    os.makedirs(html_dir, exist_ok=True)
+    html_path = os.path.join(html_dir, f"report_{target_date_str}.html")
+    
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+        
+    return html_path
 
 # ==================== Main Runner ====================
 
@@ -219,7 +321,7 @@ if __name__ == "__main__":
     parser.add_argument("--tp_size", type=int, default=2, help="Tensor Parallelism size")
     parser.add_argument("--gpu_util", type=float, default=0.85, help="vLLM GPU memory utilization ratio")
     parser.add_argument("--max_num_seqs", type=int, default=256, help="Maximum number of sequences to process in parallel")
-    parser.add_argument("--save_dir", type=str, default="./paper-finder/daily_arxiv", help="Base directory to save results")
+    parser.add_argument("--save_dir", type=str, default="./llm-paper-filter/daily_arxiv", help="Base directory to save results")
 
     args = parser.parse_args()
 
@@ -239,7 +341,6 @@ if __name__ == "__main__":
         quantization="awq_marlin",
         # quantization="awq",
         gpu_memory_utilization=args.gpu_util,
-        swap_space=0,
         enable_prefix_caching=True,
         max_num_seqs=256,
         max_model_len=4096
@@ -323,7 +424,11 @@ if __name__ == "__main__":
         
     with open(all_papers_save_path, "w", encoding="utf-8") as f:
         json.dump(all_papers_payload, f, ensure_ascii=False, indent=4)
-        
+
+    # === 生成供手机阅读的 HTML 文件 ===
+    html_report_path = generate_mobile_html_report(translated_hits, target_date_str, args.save_dir)
+
     print(f"\nHigh-value hits saved to: {hits_save_path}")
     print(f"Translated hits saved to: {hits_zh_save_path}")
     print(f"Full evaluation log saved to: {all_papers_save_path}")
+    print(f"Mobile HTML report saved to: {html_report_path}") # 提示 HTML 路径
