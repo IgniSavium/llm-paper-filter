@@ -238,13 +238,13 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
             .authors {{ font-size: 0.85em; color: #95a5a6; margin-bottom: 12px; font-style: italic; word-wrap: break-word; }}
             .reason {{ background: #fff8e1; padding: 12px; border-left: 4px solid #f1c40f; border-radius: 4px; font-size: 0.95em; margin-bottom: 12px; color: #5d4037; }}
             
-            /* 摘要折叠面板样式 */
+            /* Abstract collapsible panel style */
             .abstract-group {{ margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }}
             .abstract-toggle {{ cursor: pointer; font-size: 0.9em; font-weight: bold; padding: 5px 0; outline: none; }}
             .toggle-zh {{ color: #2980b9; }}
-            .toggle-en {{ color: #8e44ad; }} /* 英文摘要按钮用紫色区分 */
+            .toggle-en {{ color: #8e44ad; }} /* Purple color for English abstract button */
             .abstract-content {{ font-size: 0.9em; color: #555; background: #f9f9f9; padding: 10px; border-radius: 6px; margin-top: 5px; }}
-            .en-text {{ font-family: "Georgia", serif; line-height: 1.5; }} /* 英文内容换一种衬线字体，更适合学术阅读 */
+            .en-text {{ font-family: "Georgia", serif; line-height: 1.5; }} /* Different serif font for English content, more suitable for academic reading */
             
             .link-btn {{ display: block; text-align: center; margin-top: 15px; padding: 10px; background: #2ecc71; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.95em; }}
             .link-btn:active {{ background: #27ae60; }}
@@ -266,7 +266,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
             authors = ", ".join(paper.get('authors', []))
             reason = eval_data.get('zh_reason', eval_data.get('reason', '无推荐理由'))
             
-            # 提取中英文摘要
+            # Extract Chinese and English abstracts
             zh_abstract = paper.get('zh_abstract', '无中文翻译摘要')
             en_abstract = paper.get('abstract', 'No English abstract available.')
 
@@ -425,10 +425,10 @@ if __name__ == "__main__":
     with open(all_papers_save_path, "w", encoding="utf-8") as f:
         json.dump(all_papers_payload, f, ensure_ascii=False, indent=4)
 
-    # === 生成供手机阅读的 HTML 文件 ===
+    # === Generate HTML report for mobile reading ===
     html_report_path = generate_mobile_html_report(translated_hits, target_date_str, args.save_dir)
 
     print(f"\nHigh-value hits saved to: {hits_save_path}")
     print(f"Translated hits saved to: {hits_zh_save_path}")
     print(f"Full evaluation log saved to: {all_papers_save_path}")
-    print(f"Mobile HTML report saved to: {html_report_path}") # 提示 HTML 路径
+    print(f"Mobile HTML report saved to: {html_report_path}") # Log HTML path
