@@ -25,8 +25,8 @@ if uploaded_file is not None:
         
         with st.container():
             # 标题部分
-            st.subheader(f"[{i+1}] {paper.get('zh_title', paper.get('title'))}")
-            st.caption(f"{paper.get('title')} | **得分:** {score}/5 | **类别:** {category}")
+            st.subheader(f"[{i+1}] {paper.get('title', paper.get('zh_title'))}")
+            st.caption(f"{paper.get('zh_title')} | **得分:** {score}/5 | **类别:** {category}")
             st.write(f"**👥 作者:** {', '.join(paper.get('authors', []))}")
             
             # AI 推荐理由
