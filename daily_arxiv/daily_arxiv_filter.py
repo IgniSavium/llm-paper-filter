@@ -63,8 +63,10 @@ Reason: {reason}
 
 # ==================== Module 1: Fetching ====================
 
-def fetch_papers_by_date(target_date_str=None, buffer_limit=1000, max_retries=3, retry_delay=5) -> tuple:
-    """Optimized fetch using arXiv's native date querying API with retry mechanism."""
+# ==================== Module 1: Fetching ====================
+
+def fetch_papers_by_date(target_date_str=None, buffer_limit=2000, max_retries=3, retry_delay=5) -> tuple:
+    """Optimized fetch using LastUpdatedDate to get actual published/announced papers."""
     import time
     
     if target_date_str is None:
@@ -73,17 +75,15 @@ def fetch_papers_by_date(target_date_str=None, buffer_limit=1000, max_retries=3,
     else:
         target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
         
-    print(f"\n[1/4] Target locked: Fetching all updates for UTC date {target_date}")
+    print(f"\n[1/4] Target locked: Fetching all updates announced on UTC date {target_date}")
     
-    # Use arXiv native Lucene syntax to filter by date on the server side
-    date_query_str = target_date.strftime("%Y%m%d")
-    # Build Query with date range
-    query = f"(cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND submittedDate:[{date_query_str}0000 TO {date_query_str}2359]"
+    # Remove submittedDate restriction, search by category only
+    query = "cat:cs.AI OR cat:cs.LG OR cat:cs.CL"
     
     search = arxiv.Search(
         query=query,
-        max_results=buffer_limit, 
-        sort_by=arxiv.SortCriterion.SubmittedDate,
+        max_results=buffer_limit, # Suggest default to 2000 to prevent truncation if daily volume is high
+        sort_by=arxiv.SortCriterion.LastUpdatedDate, # Core change: sort by announcement/update date
         sort_order=arxiv.SortOrder.Descending
     )
     
@@ -93,23 +93,24 @@ def fetch_papers_by_date(target_date_str=None, buffer_limit=1000, max_retries=3,
         papers = []
         try:
             for paper in client.results(search):
-                paper_date = paper.published.date()
+                # Core change: use paper.updated.date() to get the specific announcement date
+                paper_date = paper.updated.date()
                 
-                # Double Check for defensive programming (arXiv API occasionally returns slight time offsets)
                 if paper_date == target_date:
                     papers.append({
                         "title": paper.title,
                         "authors": [author.name for author in paper.authors],
                         "abstract": paper.summary.replace('\n', ' '),
                         "url": paper.entry_id,
-                        "date": paper.published.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        # Record announcement time for monitoring
+                        "date": paper.updated.strftime("%Y-%m-%d %H:%M:%S UTC") 
                     })
                 elif paper_date < target_date:
-                    # Keep truncation logic as a safety measure, though usually not triggered
+                    # Since results are descending, encountering an earlier date means the target day is complete
                     print(f"      -> Encountered earlier date ({paper_date}), stopping fetch.")
                     break
 
-            print(f"Fetch complete: {len(papers)} AI-related updates found for {target_date}.")
+            print(f"Fetch complete: {len(papers)} AI-related updates found announced on {target_date}.")
             return papers, str(target_date)
             
         except Exception as e:
@@ -255,7 +256,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
     """
 
     if not translated_hits:
-        html_content += '<div class="paper-card" style="text-align: center; color: #7f8c8d;">今日无符合阈值的高价值论文。</div>'
+        html_content += '<div class="paper-card" style="text-align: center; color: #7f8c8d;">No high-value papers found today.</div>'
     else:
         for paper in translated_hits:
             eval_data = paper.get('eval', {})
@@ -264,10 +265,10 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
             title = paper.get('title', '')
             zh_title = paper.get('zh_title', title)
             authors = ", ".join(paper.get('authors', []))
-            reason = eval_data.get('zh_reason', eval_data.get('reason', '无推荐理由'))
+            reason = eval_data.get('zh_reason', eval_data.get('reason', 'No recommendation reason'))
             
             # Extract Chinese and English abstracts
-            zh_abstract = paper.get('zh_abstract', '无中文翻译摘要')
+            zh_abstract = paper.get('zh_abstract', 'No Chinese translation available')
             en_abstract = paper.get('abstract', 'No English abstract available.')
 
             html_content += f"""
@@ -279,11 +280,11 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
                 <div class="zh-title">{zh_title}</div>
                 <div class="en-title">{title}</div>
                 <div class="authors">{authors}</div>
-                <div class="reason"><strong>💡 推荐理由：</strong><br>{reason}</div>
+                <div class="reason"><strong>💡 Recommendation Reason: </strong><br>{reason}</div>
                 
                 <div class="abstract-group">
                     <details>
-                        <summary class="abstract-toggle toggle-zh">展开中文摘要</summary>
+                        <summary class="abstract-toggle toggle-zh">Expand Chinese Abstract</summary>
                         <div class="abstract-content">{zh_abstract}</div>
                     </details>
                     
@@ -293,7 +294,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir):
                     </details>
                 </div>
                 
-                <a href="{paper.get('url', '#')}" class="link-btn" target="_blank">前往 arXiv 原文</a>
+                <a href="{paper.get('url', '#')}" class="link-btn" target="_blank">Go to arXiv</a>
             </div>
             """
 
