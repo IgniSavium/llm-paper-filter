@@ -3,6 +3,7 @@ daily_arxiv/all_papers
 daily_arxiv/hits
 daily_arxiv/hits_zh
 daily_arxiv/html_reports
+*/history
 
 ===Common Ignore Patterns===
 # Python 缓存和虚拟环境

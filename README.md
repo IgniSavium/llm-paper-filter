@@ -15,6 +15,7 @@ Currently, this repository features `daily_arxiv_filter.py`, a high-throughput t
     ├── hits/                  # Stores the filtered "high-value" papers (Score >= threshold)
     ├── hits_zh/               # Stores the translated Chinese versions of the hits
     ├── html_reports/          # Store the HTML GUI
+    ├── other_models/          # Scripts for other base-llm-version    
     ├── json2gui.py            # Make a local streamlit GUI to show json file in hits_zh/
     └── daily_arxiv_filter.py  # The core execution script
 ```
@@ -38,11 +39,12 @@ pip install arxiv vllm transformers
 
 ```bash
 python daily_arxiv/daily_arxiv_filter.py \
-  --date 2026-04-08 \ # if not given, fetch arxiv papers submitted yesterday (UTC Time)
+  --date 2026-04-14 \ # if not given, fetch arxiv papers submitted yesterday (UTC Time)
   --threshold 4 \
-  --model_path /path/to/your/local/model \
-  --tp_size 2 \
-  --gpu_util 0.85 \
+  --model_path /path/to/your/local/model \ # now we recommend to use Llama-3.3-70B-Instruct
+  --tp_size 4 \
+  --gpu_util 0.90 \
+  --max_num_seqs 128 \
   --save_dir /path/to/save/directory
 ```
 
@@ -52,13 +54,14 @@ python daily_arxiv/daily_arxiv_filter.py \
 | ---------------- | -------------------------------------- | ------------------------------------------------------------ |
 | `--date`         | `None` (Yesterday UTC)                 | Target date in `YYYY-MM-DD` format.                          |
 | `--threshold`    | `4`                                    | Minimum relevance score (1-5) to classify a paper as a "hit". |
-| `--model_path`   | `Meta-Llama-3.1-70B-Instruct-AWQ-INT4` | Path to the local HuggingFace model weights.                 |
-| `--tp_size`      | `2`                                    | Tensor Parallelism size (Number of GPUs to split the model across). |
-| `--gpu_util`     | `0.85`                                 | GPU memory utilization ratio for vLLM.                       |
-| `--max_num_seqs` | `256`                                  | Maximum number of sequences to process in parallel           |
+| `--model_path`   | `Llama-3.3-70B-Instruct`               | Path to the local HuggingFace model weights.                 |
+| `--tp_size`      | `4`                                    | Tensor Parallelism size (Number of GPUs to split the model across). |
+| `--gpu_util`     | `0.90`                                 | GPU memory utilization ratio for vLLM.                       |
+| `--max_num_seqs` | `128`                                  | Maximum number of sequences to process in parallel           |
 | `--save_dir`     | `daily_arxiv`                          | Base directory to save the output JSON files.                |
 
-The script defaults to a 70B Llama-3.1 INT4 AWQ model using 2 GPUs of 48GB via Tensor Parallelism.
+The script defaults to a Llama-3.3-70B-Instruct model using 4 GPUs of 48GB via Tensor Parallelism.
+You can find previous other-base-llm version in `llm-paper-filter/daily_arxiv/other_models`.
 
 #### Prompt Demo
 
@@ -84,9 +87,9 @@ You must evaluate the paper and return ONLY a valid JSON object.
 CRITICAL: Do not include markdown formatting, code blocks (```json), or any conversational text. 
 The JSON must strictly follow this schema:
 {
-  "relevance_score": integer, // Use this strict rubric: 1 = Unrelated (does not touch the subfields); 2 = Mentioned Only (keywords appear in background/future work, but not the core focus); 3 = Peripheral/Application (applies concepts as tools but lacks mechanism depth); 4 = Strong Match (core contribution improves/analyzes mechanisms in the subfields); 5 = Core Contribution (fundamentally solves or heavily focuses on base problems in MechInterp/CompGen).
+  "relevance_score": integer, // Use this strict rubric: 1 = Unrelated; 2 = Mentioned Only; 3 = Peripheral/Application; 4 = Strong Match; 5 = Core Contribution.
   "category": string, // "MechInterp", "CompGen", "Both", or "None"
-  "reason": string // A concise, one-sentence justification for your decision. Better to summarize the core contribution of the paper and how it relates to the subfield(s) than to simply restate the title/abstract.
+  "reason": string // A concise, one-sentence justification.
 }
 ```
 
@@ -99,16 +102,17 @@ streamlit run llm-paper-filter/daily_arxiv/json2gui.py
 
 By using `streamlit run` in your PC,  you can get a GUI for daily arxiv json file in the `llm-paper-filter/daily_arxiv/hits_zh` folder, or you can find html GUI in `daily_arxiv/html_reports` folder.
 
-![image-20260410174253479](./imgs/streamlit_arxiv_gui.png)
+![streamlit_arxiv_gui](./imgs/streamlit_arxiv_gui.png)
 
+![html_gui](./imgs/html_gui.png)
 ---
 
 ## 🚀TODO
 
-⬜ Change LLM model version for best performance.
+✅ Change LLM model version for best performance. (Now we choose Llama-3.3-70B-Instruct)
 
-✅ Build GUI for better reading.
+✅ Build GUI for better reading. (Support streamlit and html)
 
-⬜ Include affiliations  and citations during filtering.
+⬜ Include affiliations and citations during filtering.
 
 ⬜ Support major AI conferences (e.g., ICLR, NeurIPS, ICML, ACL).

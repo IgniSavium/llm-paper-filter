@@ -1,45 +1,45 @@
 import streamlit as st
 import json
 
-# 设置页面配置，使用宽屏模式
+# Set page configuration, use wide layout
 st.set_page_config(page_title="ArXiv Daily", layout="wide")
 
-st.title("📚 Daily ArXiv 筛选阅读器")
+st.title("📚 Daily ArXiv Filter")
 
-# 修改了提示语，避免直接使用本地路径
-uploaded_file = st.file_uploader("📁 请在此处拖入或选择你今天的 JSON 结果文件", type="json")
+# Modified the prompt to avoid using local paths directly
+uploaded_file = st.file_uploader("📁 Please drag and drop or select your today's JSON result file here", type="json")
 
 if uploaded_file is not None:
-    # 加载 JSON 数据
+    # Load JSON data
     data = json.load(uploaded_file)
     meta = data.get("metadata", {})
     
-    # 显示概览信息
-    st.info(f"**📅 日期:** {meta.get('target_date')} | **📊 相关论文:** {meta.get('total_hits')} 篇")
+    # Display overview information
+    st.info(f"**📅 Date:** {meta.get('target_date')} | **📊 Related Papers:** {meta.get('total_hits')} papers")
     
-    # 遍历显示每一篇论文
+    # Iterate and display each paper
     for i, paper in enumerate(data.get("hits_zh", [])):
         eval_info = paper.get('eval', {})
         score = eval_info.get('relevance_score', 0)
         category = eval_info.get('category', 'None')
         
         with st.container():
-            # 标题部分
+            # Title section
             st.subheader(f"[{i+1}] {paper.get('title', paper.get('zh_title'))}")
-            st.caption(f"{paper.get('zh_title')} | **得分:** {score}/5 | **类别:** {category}")
-            st.write(f"**👥 作者:** {', '.join(paper.get('authors', []))}")
+            st.caption(f"{paper.get('zh_title')} | **Score:** {score}/5 | **Category:** {category}")
+            st.write(f"**👥 Authors:** {', '.join(paper.get('authors', []))}")
             
-            # AI 推荐理由
+            # AI Recommendation Reason
             st.success(f"**💡 AI 推荐理由:** {eval_info.get('zh_reason', eval_info.get('reason', '暂无'))}")
             
             # 中文摘要（默认不展开）
-            with st.expander("📝 阅读中文摘要", expanded=(score==5)):
+            with st.expander("📝 中文摘要", expanded=(score==5)):
                 st.write(paper.get('zh_abstract', '暂无中文摘要'))
                 
-            # 英文摘要（默认不展开）
-            with st.expander("📄 阅读英文摘要 (English Abstract)"):
+            # English abstract (collapsed by default)
+            with st.expander("📄 English Abstract"):
                 st.write(paper.get('abstract', 'No English abstract available.'))
                 
-            # 底部链接与分割线
-            st.markdown(f"[🔗 前往 arXiv Abstract]({paper.get('url')})")
+            # Bottom link and divider
+            st.markdown(f"[🔗 arXiv Abstract]({paper.get('url')})")
             st.divider()

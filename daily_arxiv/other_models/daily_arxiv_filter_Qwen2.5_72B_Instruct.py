@@ -338,9 +338,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ArXiv Daily Paper Filter using vLLM")
     parser.add_argument("--date", type=str, default=None, help="Target date YYYY-MM-DD. Defaults to yesterday (UTC).")
     parser.add_argument("--threshold", type=int, default=4, help="Minimum relevance score threshold (1-5)")
-    parser.add_argument("--model_path", type=str, default="./weights/Llama-3.3-70B-Instruct")
+    parser.add_argument("--model_path", type=str, default="./weights/Qwen2.5-72B-Instruct")
     parser.add_argument("--tp_size", type=int, default=4, help="Tensor Parallelism size")
-    parser.add_argument("--gpu_util", type=float, default=0.90, help="vLLM GPU memory utilization ratio")
+    parser.add_argument("--gpu_util", type=float, default=0.9, help="vLLM GPU memory utilization ratio")
     parser.add_argument("--max_num_seqs", type=int, default=128, help="Maximum number of sequences to process in parallel")
     parser.add_argument("--save_dir", type=str, default="./llm-paper-filter/daily_arxiv", help="Base directory to save results")
 
@@ -434,7 +434,7 @@ if __name__ == "__main__":
     hits_save_path = os.path.join(hits_dir, f"hits_{target_date_str}.json")
     hits_zh_save_path = os.path.join(hits_zh_dir, f"hits_zh_{target_date_str}.json")
     all_papers_save_path = os.path.join(all_papers_dir, f"all_papers_{target_date_str}.json")
-
+    
     # Write JSON
     with open(hits_save_path, "w", encoding="utf-8") as f:
         json.dump(hits_payload, f, ensure_ascii=False, indent=4)

@@ -338,10 +338,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ArXiv Daily Paper Filter using vLLM")
     parser.add_argument("--date", type=str, default=None, help="Target date YYYY-MM-DD. Defaults to yesterday (UTC).")
     parser.add_argument("--threshold", type=int, default=4, help="Minimum relevance score threshold (1-5)")
-    parser.add_argument("--model_path", type=str, default="./weights/Llama-3.3-70B-Instruct")
-    parser.add_argument("--tp_size", type=int, default=4, help="Tensor Parallelism size")
-    parser.add_argument("--gpu_util", type=float, default=0.90, help="vLLM GPU memory utilization ratio")
-    parser.add_argument("--max_num_seqs", type=int, default=128, help="Maximum number of sequences to process in parallel")
+    parser.add_argument("--model_path", type=str, default="./weights/Meta-Llama-3.1-70B-Instruct-AWQ-INT4")
+    parser.add_argument("--tp_size", type=int, default=2, help="Tensor Parallelism size")
+    parser.add_argument("--gpu_util", type=float, default=0.85, help="vLLM GPU memory utilization ratio")
+    parser.add_argument("--max_num_seqs", type=int, default=256, help="Maximum number of sequences to process in parallel")
     parser.add_argument("--save_dir", type=str, default="./llm-paper-filter/daily_arxiv", help="Base directory to save results")
 
     args = parser.parse_args()
@@ -359,7 +359,7 @@ if __name__ == "__main__":
     llm = LLM(
         model=args.model_path,
         tensor_parallel_size=args.tp_size,
-        dtype="bfloat16",
+        quantization="awq_marlin",
         gpu_memory_utilization=args.gpu_util,
         enable_prefix_caching=True,
         max_num_seqs=args.max_num_seqs,
@@ -431,9 +431,9 @@ if __name__ == "__main__":
     }
 
     # Save file paths
-    hits_save_path = os.path.join(hits_dir, f"hits_{target_date_str}.json")
-    hits_zh_save_path = os.path.join(hits_zh_dir, f"hits_zh_{target_date_str}.json")
-    all_papers_save_path = os.path.join(all_papers_dir, f"all_papers_{target_date_str}.json")
+    hits_save_path = os.path.join(hits_dir, f"hits_{target_date_str}_Llama3.1-70B-INT4.json")
+    hits_zh_save_path = os.path.join(hits_zh_dir, f"hits_zh_{target_date_str}_Llama3.1-70B-INT4.json")
+    all_papers_save_path = os.path.join(all_papers_dir, f"all_papers_{target_date_str}_Llama3.1-70B-INT4.json")
 
     # Write JSON
     with open(hits_save_path, "w", encoding="utf-8") as f:
