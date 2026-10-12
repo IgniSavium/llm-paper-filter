@@ -1,0 +1,4 @@
+# Optional GPU backend. Choose a vLLM build compatible with your CUDA setup.
+-r requirements.txt
+vllm>=0.19,<1
+transformers

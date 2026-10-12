@@ -1,0 +1,41 @@
+# Generated paper inputs, inference caches, reports, and scheduler state
+daily_arxiv/paper_info/
+daily_arxiv/runs/
+
+# Local tests (kept on this machine, excluded from the public repository)
+daily_arxiv/tests/
+daily_arxiv/test_*.py
+
+# Python environments and build/test artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+config.json
+keys.json
+*.pem
+*.key
+
+# Logs, downloaded models, and local datasets
+*.log
+*.sqlite3
+/weights/
+/models/
+/data/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store

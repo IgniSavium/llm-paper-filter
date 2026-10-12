@@ -1,0 +1,3 @@
+# CPU-only GPT filtering, fetching, and HTML generation (Python 3.11+).
+requests>=2.32,<3
+arxiv>=2.4,<3
