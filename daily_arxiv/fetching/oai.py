@@ -92,6 +92,8 @@ def parse_page(content, categories):
             'url': f'https://arxiv.org/abs/{identifier}v{latest}',
             'date': updated.strftime('%Y-%m-%d %H:%M:%S UTC'),
             'published': published.isoformat(), 'updated': updated.isoformat(),
+            'comment': raw.findtext(RAW + 'comments'),
+            'journal_ref': raw.findtext(RAW + 'journal-ref'),
             'status': 'v1 (New)' if latest == 1 else f'v{latest} Update',
             'arxiv_categories': paper_categories, 'oai_datestamp': datestamp,
             'version_history': [{'version': n, 'submitted_at': d.isoformat()} for n, d in sorted(versions)],

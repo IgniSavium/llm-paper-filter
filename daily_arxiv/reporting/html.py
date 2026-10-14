@@ -141,6 +141,8 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
     threshold = (metadata or {}).get('threshold_used', 4)
     papers = sorted([p for p in translated_hits if evaluation_score(p.get('eval', {})) >= threshold],
                     key=lambda p: evaluation_score(p['eval']), reverse=True)
+    export_cache_path = Path(save_dir) / '.paper_metadata.json'
+    export_cache = json.loads(export_cache_path.read_text()) if export_cache_path.exists() else {}
     cards = []
     for index, paper in enumerate(papers, 1):
         evaluation = paper["eval"]
@@ -157,8 +159,16 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         url = paper.get("url", "")
         if not url.startswith(("https://", "http://")):
             url = "#"
+        extra = export_cache.get(paper.get('url', ''), {})
+        export_metadata = {
+            'title': paper.get('title', ''), 'authors': paper.get('authors', []),
+            'published': paper.get('published'), 'updated': paper.get('updated'),
+            'categories': paper.get('arxiv_categories', []), 'url': url,
+            'comment': paper.get('comment', extra.get('comment', '未记录')),
+            'journal_ref': paper.get('journal_ref', extra.get('journal_ref', '未记录')),
+        }
         en, zh, en_ids, zh_ids = align_sentences(paper.get("abstract", ""), paper.get("zh_abstract") or "暂无中文摘要")
-        cards.append(f'''<article id="paper-{index}" class="paper-card" data-title="{escape(paper.get('title', ''), quote=True)}" data-bookmark-key="{escape(bookmark_key(paper), quote=True)}" data-categories="{escape(json.dumps(labels), quote=True)}" data-score="{score}" data-category-scores="{escape(json.dumps(scores), quote=True)}" data-new="{str(status == 'v1 (New)').lower()}">
+        cards.append(f'''<article id="paper-{index}" class="paper-card" data-paper-metadata="{escape(json.dumps(export_metadata, ensure_ascii=False), quote=True)}" data-title="{escape(paper.get('title', ''), quote=True)}" data-bookmark-key="{escape(bookmark_key(paper), quote=True)}" data-categories="{escape(json.dumps(labels), quote=True)}" data-score="{score}" data-category-scores="{escape(json.dumps(scores), quote=True)}" data-new="{str(status == 'v1 (New)').lower()}">
   <div class="card-top"><div class="tags"><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span>{badges}<span class="status">{escape(status)}</span></div><div class="card-actions"><button class="bookmark-button" type="button" aria-pressed="false" aria-label="标记这篇论文" title="标记这篇论文"><span class="bookmark-icon" aria-hidden="true">☆</span></button><span class="score score-{score}">{score}<small>{score_caption}</small></span></div></div>
   <h2>{math_markup(paper.get('title', ''))}</h2>
   <p class="zh-title" lang="zh-CN">{math_markup(paper.get('zh_title', ''))}</p>
