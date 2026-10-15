@@ -4,7 +4,7 @@ OAI exposes the latest version of each changed article. A paper first made publi
 today is harvested today even if its version was submitted months ago.
 """
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 import re
 import time
@@ -114,7 +114,47 @@ class Harvest:
     deleted_identifiers: list
 
 
+class OaiTransportError(RuntimeError):
+    """An exhausted HTTP/network request, eligible for a smaller query window."""
+
+
 def fetch_metadata_updates(start, until=None, categories=DEFAULT_CATEGORIES, *, max_retries=5,
+                           retry_delay=3, timeout=60):
+    """Retry transport failures with smaller complete category/date queries.
+
+    Protocol/record validation errors always propagate. Partial results from a
+    failed stream are discarded; no caller receives data until all splits pass.
+    """
+    categories = tuple(dict.fromkeys(categories))
+    options = dict(max_retries=max_retries, retry_delay=retry_delay, timeout=timeout)
+    try:
+        return _fetch_metadata_updates_once(start, until, categories, **options)
+    except OaiTransportError:
+        if len(categories) > 1:
+            print('OAI transport failed; retrying separate complete category queries', flush=True)
+            harvests = [fetch_metadata_updates(start, until, (category,), **options)
+                        for category in categories]
+        elif until and start < until:
+            first = datetime.strptime(start, '%Y-%m-%d').date()
+            last = datetime.strptime(until, '%Y-%m-%d').date()
+            middle = first + (last - first) // 2
+            print(f'OAI transport failed; splitting {start} through {until} at {middle}', flush=True)
+            harvests = [fetch_metadata_updates(start, middle.isoformat(), categories, **options),
+                        fetch_metadata_updates((middle + timedelta(days=1)).isoformat(), until, categories, **options)]
+        else:
+            raise
+    rows = {}
+    for harvest in harvests:
+        for paper in harvest.papers:
+            previous = rows.get(paper['url'])
+            if previous is None or paper['oai_datestamp'] >= previous['oai_datestamp']:
+                rows[paper['url']] = paper
+    return Harvest(sorted(rows.values(), key=lambda r: (r['oai_datestamp'], r['url'])),
+                   min(h.response_day for h in harvests), sum(h.record_count for h in harvests),
+                   sorted({identifier for h in harvests for identifier in h.deleted_identifiers}))
+
+
+def _fetch_metadata_updates_once(start, until=None, categories=DEFAULT_CATEGORIES, *, max_retries=5,
                            retry_delay=3, timeout=60):
     """Follow every resumption token, across the union of category sets.
 
@@ -152,17 +192,19 @@ def fetch_metadata_updates(start, until=None, categories=DEFAULT_CATEGORIES, *, 
                         response.raise_for_status()
                         break
                     except requests.RequestException as exc:
-                        if attempt + 1 == max_retries:
-                            raise RuntimeError('OAI fetch failed; sync cursor not advanced') from exc
-                        delay = retry_delay * (2 ** attempt)
                         failed = getattr(exc, 'response', None)
+                        failure = (f'HTTP {failed.status_code}' if failed is not None else type(exc).__name__)
+                        context = f'{failure}; category={category}; records_read={stream_count}'
+                        if attempt + 1 == max_retries:
+                            raise OaiTransportError(f'OAI fetch failed ({context}); sync cursor not advanced') from exc
+                        delay = retry_delay * (2 ** attempt)
                         retry_after = failed.headers.get('Retry-After') if failed is not None else None
                         if retry_after:
                             try:
                                 delay = max(delay, float(retry_after))
                             except ValueError:
                                 delay = max(delay, (parsedate_to_datetime(retry_after) - datetime.now(timezone.utc)).total_seconds())
-                        print(f'OAI request retry {attempt + 1}/{max_retries} in {delay:g}s', flush=True)
+                        print(f'OAI request retry {attempt + 1}/{max_retries} in {delay:g}s ({context})', flush=True)
                         time.sleep(delay)
                 page_rows, page_deleted, token, total, response_day, count = parse_page(response.content, categories)
                 response_days.append(response_day)

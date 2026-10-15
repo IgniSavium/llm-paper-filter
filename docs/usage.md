@@ -150,6 +150,15 @@ to seed completion. Work is serialized with a process lock. Interrupted jobs
 resume from the saved boundary. The tmux session continues after SSH disconnects,
 but must be restarted after a machine or container reboot. The same user must
 retain a working Codex login. Diagnose failures in the scheduler and job logs.
+Failed filtering/fetching jobs retry after 1 hour, 1 hour, 2 hours, and then at
+most every 4 hours until recovery; the next daily trigger takes priority if it
+is sooner. Failures never advance the completed date. OAI errors include the
+HTTP status or network exception type and the category/page position.
+After exhausted transport retries, multi-category OAI queries fall back to
+separate categories, then recursively smaller date windows. Every split must
+complete before results are saved; malformed XML, missing records, and invalid
+pagination remain errors. This reduces dependence on a single slow multi-day
+page, but cannot resolve an unavailable single-day endpoint.
 
 ## Local models and legacy scripts
 

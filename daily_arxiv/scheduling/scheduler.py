@@ -53,7 +53,11 @@ def record_outcome(state, now, started_at, end, code, stopping=False):
                      next_run_at=next_daily(now, state['timezone'], state['at']).isoformat())
     else:
         scheduled = next_daily(now, state['timezone'], state['at'])
-        retry = min(now + timedelta(hours=1), scheduled) if state['attempts'] < 3 else scheduled
+        # Keep recovering during the day instead of abandoning a date after
+        # three transient fetch failures. Back off 1h, 1h, 2h, then at most 4h;
+        # the next daily trigger always takes priority if it is sooner.
+        delay_hours = 2 ** min(max(state['attempts'] - 2, 0), 2)
+        retry = min(now + timedelta(hours=delay_hours), scheduled)
         state.update(status='retry_wait' if retry < scheduled else 'waiting_after_failure', next_run_at=retry.isoformat())
 
 
