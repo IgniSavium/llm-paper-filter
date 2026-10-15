@@ -1,10 +1,8 @@
 [
   {
     "date": "2026-10-13",
-    "url": null,
+    "url": "reports/report_2026-10-13.html",
     "papers": 1,
-    "status": "no_matches",
-    "evaluated_papers": 3,
     "score_5_counts": {
       "MechInterp": 0,
       "CompGen": 0,
@@ -28,7 +26,6 @@
     "url": null,
     "papers": 0,
     "status": "no_updates",
-    "evaluated_papers": 0,
     "score_5_counts": {
       "MechInterp": 0,
       "CompGen": 0,
@@ -41,7 +38,6 @@
     "url": null,
     "papers": 0,
     "status": "no_updates",
-    "evaluated_papers": 0,
     "score_5_counts": {
       "MechInterp": 0,
       "CompGen": 0,
