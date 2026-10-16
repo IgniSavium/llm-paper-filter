@@ -58,7 +58,11 @@ class CodexClient:
 
     def request(self, instruction, records, translation=False):
         expected_ids = [record["id"] for record in records]
-        prompt = paper_prompt(instruction, records, translation)
+        # A failed translation batch is split into single papers by the shared
+        # pipeline. Remove synthetic formula context from singleton requests so
+        # the model cannot keep copying it into the translated prose on retries.
+        prompt = paper_prompt(instruction, records, translation,
+                              fragments_only=translation and len(records) == 1)
         schema = result_schema(translation, segmented=translation)
         if translation and len(records) == 1:
             # Split/retried papers have a known output shape. Enforce counts at
@@ -66,8 +70,14 @@ class CodexClient:
             item = schema['properties']['results']['items']['properties']
             item['id']['enum'] = expected_ids
             for field in ('title', 'abstract', 'reason'):
-                count = len(split_translation_text(records[0][field])[0])
+                parts = split_translation_text(records[0][field])[0]
+                count = len(parts)
                 item[f'zh_{field}_parts'].update(minItems=count, maxItems=count)
+                # When every source slot contains prose, enforce nonempty output
+                # at generation time. Mixed empty/punctuation slots must remain
+                # permitted and are checked individually during reconstruction.
+                if all(part.strip() and any(c.isalnum() for c in part) for part in parts):
+                    item[f'zh_{field}_parts']['items']['minLength'] = 1
             schema['properties']['results'].update(minItems=1, maxItems=1)
         error = ""
         for attempt in range(self.retries):

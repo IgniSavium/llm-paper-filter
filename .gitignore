@@ -1,6 +1,9 @@
 # Generated paper inputs, inference caches, reports, and scheduler state
 daily_arxiv/paper_info/
 daily_arxiv/runs/
+openreview/paper_info/
+openreview/runs/
+openreview/credentials.json
 
 # Local tests (kept on this machine, excluded from the public repository)
 daily_arxiv/tests/

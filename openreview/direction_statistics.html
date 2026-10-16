@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conference Papers · 方向趋势</title>
+<script>
+try { document.documentElement.dataset.theme = localStorage.getItem('arxiv-reader-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (_) {}
+</script>
+<style>
+:root{color-scheme:light;--bg:#f5f5f0;--surface:#fff;--text:#25352f;--muted:#67756e;--border:#dde4dc;--accent:#226b54;--soft:#edf4ef;--reason:#faf8ef;--shadow:0 8px 30px #18382b08;--iclr:#b17a46;--icml:#527eac;--neurips:#226b54}
+:root[data-theme=dark]{color-scheme:dark;--bg:#10171e;--surface:#18222d;--text:#e4ece8;--muted:#a0b2ac;--border:#30404a;--accent:#93d5b8;--soft:#23362f;--reason:#282a24;--shadow:0 8px 30px #0002;--iclr:#dbad7b;--icml:#91b9e0;--neurips:#93d5b8}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif;transition:background .15s,color .15s}button{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:7px 12px;cursor:pointer}button:hover{border-color:var(--accent)}button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.shell{max-width:1240px;margin:auto;padding:44px 30px 64px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:750}.masthead h1{margin:6px 0;font-size:36px;letter-spacing:-.04em}.subtitle{margin:0;color:var(--muted);font-size:14px}.theme-button{white-space:nowrap}.report{margin-top:30px;border:1px solid var(--border);border-radius:17px;background:var(--surface);padding:24px 28px;box-shadow:var(--shadow)}.controls{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.segmented{display:flex;gap:3px;flex-wrap:wrap}.segmented button{font-size:13px;padding:6px 10px;border-color:transparent}.segmented button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--border)}.view-controls{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.submission-toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}input{accent-color:var(--accent)}.chart-wrap{margin-top:26px}.chart svg{display:block;width:100%;height:auto}.chart-title{font-size:16px;font-weight:600;margin:26px 0 0}.lower-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:24px}.lower-heading .chart-title{margin:0}.rate-note{color:var(--muted);font-size:13px;margin:12px 0 0}.rate-note a,.rate-sources a{color:var(--accent);text-decoration:none}.rate-sources{font-size:13px;color:var(--muted);margin-top:10px}.rate-sources summary{cursor:pointer}.source-links{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}.total-section{border-top:1px solid var(--border);margin-top:28px;padding-top:4px}noscript{display:block;padding:24px}@media(max-width:760px){.shell{padding:24px 14px 36px}.masthead h1{font-size:28px}.report{padding:18px 14px}.controls{align-items:flex-start}.view-controls{width:100%;justify-content:space-between}.chart-wrap{overflow-x:auto}.chart{min-width:620px}.theme-button{font-size:13px;padding:6px 9px}}@media(prefers-reduced-motion:reduce){body{transition:none}}
+</style>
+</head>
+<body><main class="shell">
+<header class="masthead"><div><div class="eyebrow">RESEARCH READING LIST</div><h1>Conference Papers</h1><p class="subtitle">MechInterp / CompGen · 5 分文献趋势</p></div><button id="theme-toggle" class="theme-button" type="button" aria-label="切换明暗主题">切换主题</button></header>
+<section class="report" aria-label="文献数量和占比趋势">
+<div class="controls"><div class="segmented" id="directions" aria-label="方向"><button data-metric="mech" aria-pressed="true">MechInterp = 5</button><button data-metric="comp" aria-pressed="false">CompGen = 5</button><button data-metric="either" aria-pressed="false">任一 = 5</button></div><div class="view-controls"><div class="segmented" id="views" aria-label="统计指标"><button data-kind="counts" aria-pressed="false">篇数</button><button data-kind="rates" aria-pressed="true">占比</button></div><label class="submission-toggle"><input id="include-submission" type="checkbox" checked>显示 ICLR 2027 投稿</label></div></div>
+<h2 id="direction-title" class="chart-title">5 分文献占比</h2>
+<div class="chart-wrap" aria-live="polite"><!--CHARTS--></div>
+<div class="total-section"><div class="lower-heading"><h2 id="lower-title" class="chart-title">会议录用 / 投稿总量</h2><div class="segmented" id="lower-views" aria-label="会议统计"><button data-lower="total" aria-pressed="true">总量</button><button data-lower="acceptance" aria-pressed="false">录用率</button></div></div><div class="chart-wrap" aria-live="polite"><!--TOTAL_CHARTS--></div><div id="rate-info" hidden><p class="rate-note">标签为录用率及录用数 / 投稿数；数字优先采用官方统计，≈ 表示估算。ICLR 2027 尚无录用结果。</p><details class="rate-sources"><summary>数据来源</summary><div id="rate-sources" class="source-links"></div></details></div></div>
+</section><noscript>请启用 JavaScript 查看方向趋势图。</noscript>
+</main>
+<script id="report-data" type="application/json">__REPORT_DATA__</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('report-data').textContent),rows=data.rows;
+const byId=id=>document.getElementById(id);
+let metric='mech',kind='rates',lower='total';
+function update(){
+ document.querySelectorAll('[data-metric]').forEach(e=>{if(e.tagName==='BUTTON')e.setAttribute('aria-pressed',String(e.dataset.metric===metric))});
+ document.querySelectorAll('[data-kind]').forEach(e=>{if(e.tagName==='BUTTON')e.setAttribute('aria-pressed',String(e.dataset.kind===kind))});
+ document.querySelectorAll('.chart').forEach(c=>{
+  const isLower=c.dataset.metric==='total'||c.dataset.metric==='acceptance';
+  c.hidden=!((isLower?c.dataset.metric===lower:(c.dataset.metric===metric&&c.dataset.kind===kind))&&c.dataset.submission===String(byId('include-submission').checked));
+ });
+ document.querySelectorAll('[data-lower]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lower===lower)));
+ byId('lower-title').textContent=lower==='total'?'会议录用 / 投稿总量':'会议录用率';
+ byId('rate-info').hidden=lower!=='acceptance';
+ byId('direction-title').textContent='5 分文献'+(kind==='rates'?'占比':'篇数');
+}
+function updateTheme(){const dark=document.documentElement.dataset.theme==='dark';byId('theme-toggle').textContent=dark?'☀ 浅色模式':'☾ 深色模式';byId('theme-toggle').setAttribute('aria-pressed',String(dark))}
+byId('theme-toggle').addEventListener('click',()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('arxiv-reader-theme',document.documentElement.dataset.theme)}catch(_){}updateTheme()});
+document.querySelectorAll('#directions button').forEach(b=>b.addEventListener('click',()=>{metric=b.dataset.metric;update()}));
+document.querySelectorAll('#views button').forEach(b=>b.addEventListener('click',()=>{kind=b.dataset.kind;update()}));
+document.querySelectorAll('[data-lower]').forEach(b=>b.addEventListener('click',()=>{lower=b.dataset.lower;update()}));
+byId('rate-sources').innerHTML=data.acceptance_statistics.map(r=>'<a href="'+r.source_url+'" target="_blank" rel="noopener noreferrer" title="'+((r.estimation_note?r.estimation_note+'；':'')+r.display_accepted.toLocaleString()+' / '+(r.submitted_estimated?'≈':'')+r.display_submitted.toLocaleString()+(r.accepted_count_basis==='local_snapshot'?'；录用数来自本地快照':''))+'">'+r.conference+' '+r.year+(r.rate_estimated?'（估算）':'')+'</a>').join('');
+byId('include-submission').addEventListener('change',update);updateTheme();update();
+</script></body></html>

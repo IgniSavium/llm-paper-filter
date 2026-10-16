@@ -1,0 +1,115 @@
+{
+  "description": "Official conference rates, or accepted/submitted using official counts. Never divided by local snapshot counts. Counts and rounding follow each official source.",
+  "statistics": [
+    {
+      "conference": "ICLR",
+      "year": 2023,
+      "accepted": 1574,
+      "submitted": 4938,
+      "rate_percent": 31.87525313892264,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2023/ICLR2023-Fact_Sheet.pdf",
+      "source_title": "ICLR 2023 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "ICLR",
+      "year": 2024,
+      "accepted": 2260,
+      "submitted": 7262,
+      "rate_percent": 31.120903332415313,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2024/ICLR2024-Fact_Sheet.pdf",
+      "source_title": "ICLR 2024 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "ICLR",
+      "year": 2025,
+      "accepted": 3704,
+      "submitted": 11603,
+      "rate_percent": 31.922778591743516,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2025/ICLR2025_Fact_Sheet.pdf",
+      "source_title": "ICLR 2025 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "ICLR",
+      "year": 2026,
+      "accepted": 5357,
+      "submitted": 19525,
+      "rate_percent": 27.43661971830986,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2026/ICLR2026_Fact_Sheet.pdf",
+      "source_title": "ICLR 2026 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "ICML",
+      "year": 2024,
+      "accepted": null,
+      "submitted": null,
+      "rate_percent": 27.5,
+      "rate_basis": "official_reported_rate",
+      "source_url": "https://media.icml.cc/Conferences/ICML2024/ICML2024_Fact_Sheet.pdf",
+      "source_title": "ICML 2024 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "ICML",
+      "year": 2025,
+      "accepted": 3260,
+      "submitted": null,
+      "rate_percent": 27.0,
+      "rate_basis": "official_reported_rate",
+      "source_url": "https://media.icml.cc/Conferences/ICML2025/ICML2025_Fact_Sheet.pdf",
+      "source_title": "ICML 2025 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "ICML",
+      "year": 2026,
+      "accepted": 6552,
+      "submitted": 24661,
+      "rate_percent": 26.568265682656826,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.icml.cc/Conferences/ICML2026/ICML2026_Fact_Sheet.pdf",
+      "source_title": "ICML 2026 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2023,
+      "accepted": 3218,
+      "submitted": 12343,
+      "rate_percent": 26.07145750627886,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.neurips.cc/Conferences/NeurIPS2023/NeurIPS2023-Fact_Sheet.pdf",
+      "source_title": "NeurIPS 2023 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2024,
+      "accepted": 4037,
+      "submitted": 15671,
+      "rate_percent": 25.76095973454151,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.neurips.cc/Conferences/NeurIPS2024/NeurIPS2024-Fact_Sheet.pdf",
+      "source_title": "NeurIPS 2024 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2025,
+      "accepted": 5290,
+      "submitted": 21575,
+      "rate_percent": 24.519119351100812,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.neurips.cc/Conferences/NeurIPS2025/press/NeurIPS2025-Fact_Sheet.pdf",
+      "source_title": "NeurIPS 2025 Official Fact Sheet",
+      "verified_on": "2026-10-16"
+    }
+  ]
+}

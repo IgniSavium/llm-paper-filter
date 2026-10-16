@@ -11,6 +11,7 @@ import re
 from urllib.parse import urlparse
 
 from daily_arxiv.filtering.prompts import CATEGORIES, PROMPT_SHA256, category_labels, evaluation_score, DEFAULT_FILTER_EXPRESSION
+from daily_arxiv.math_text import MATH_PATTERN, normalize_math_source
 
 
 def bookmark_key(paper):
@@ -23,10 +24,11 @@ def bookmark_key(paper):
         return "url:" + parsed.netloc.lower() + parsed.path + ("?" + parsed.query if parsed.query else "")
     return "paper:" + hashlib.sha256((paper.get("title", "") + "\n" + paper.get("abstract", "")).encode()).hexdigest()
 
-MATH_RE = re.compile(r"(?<!\\)\$\$.*?(?<!\\)\$\$|(?<![\\$])\$(?!\$|\s*\d[\d,.]*(?:[A-Za-z]{1,3})?\s+[^\W\d_]{2,}(?=[\s,.;:，。；：]))(?:\\.|[^\\$])*?(?<!\\)\$(?![\d$])|\\\(.*?\\\)|\\\[.*?\\\]", re.S)
+MATH_RE = re.compile(MATH_PATTERN, re.S)
 
 
 def math_markup(text):
+    text = normalize_math_source(text)
     parts = []
     start = 0
     for match in MATH_RE.finditer(text):
@@ -42,9 +44,10 @@ def math_markup(text):
 
 
 def split_sentences(text, language):
-    """Keep every source character, while protecting math and common abbreviations."""
+    """Protect math and abbreviations after repairing escaped closing delimiters."""
     if not text:
         return []
+    text = normalize_math_source(text)
     protected = []
     def protect(match):
         marker = f"\ue000{len(protected)}\ue001"
@@ -138,25 +141,35 @@ def math_assets():
 
 
 def generate_mobile_html_report(translated_hits, target_date_str, save_dir, metadata=None):
-    threshold = (metadata or {}).get('threshold_used', 4)
-    papers = sorted([p for p in translated_hits if evaluation_score(p.get('eval', {})) >= threshold],
-                    key=lambda p: evaluation_score(p['eval']), reverse=True)
+    conference_report = (metadata or {}).get('source') == 'openreview'
+    categories = ('MechInterp', 'CompGen') if conference_report else CATEGORIES
+    threshold = 4 if conference_report else (metadata or {}).get('threshold_used', 4)
+    def report_score(evaluation):
+        if conference_report:
+            return max((evaluation.get('scores', {}).get(c, 0) for c in categories), default=0)
+        return evaluation_score(evaluation)
+    papers = sorted([p for p in translated_hits if report_score(p.get('eval', {})) >= threshold],
+                    key=lambda p: report_score(p['eval']), reverse=True)
     export_cache_path = Path(save_dir) / '.paper_metadata.json'
     export_cache = json.loads(export_cache_path.read_text()) if export_cache_path.exists() else {}
     cards = []
     for index, paper in enumerate(papers, 1):
         evaluation = paper["eval"]
-        labels = category_labels(evaluation, threshold)
+        labels = ([c for c in categories if evaluation.get('scores', {}).get(c, 0) >= threshold]
+                  if conference_report else category_labels(evaluation, threshold))
         badges = "".join(f'<span class="tag" data-tag="{escape(c, quote=True)}">{escape(c)}</span>' for c in labels)
         scores = evaluation.get("scores")
-        score = evaluation_score(evaluation)
+        if conference_report and scores:
+            scores = {c: scores[c] for c in categories}
+        score = report_score(evaluation)
         if scores:
-            badges = "".join(f'<span class="tag{" tag-low" if scores[c] < threshold else ""}" data-tag="{c}">{c} {scores[c]}/5</span>' for c in CATEGORIES)
+            badges = "".join(f'<span class="tag{" tag-low" if scores[c] < threshold else ""}" data-tag="{c}">{c} {scores[c]}/5</span>' for c in categories)
         else:
             badges += '<span class="status">历史总分；方向未评分</span>'
         score_caption = "/5 最高方向分" if scores else "/5 历史总分"
         status = paper.get("status", "Update")
         url = paper.get("url", "")
+        reading_source = 'OpenReview' if urlparse(url).hostname == 'openreview.net' else 'arXiv'
         if not url.startswith(("https://", "http://")):
             url = "#"
         extra = export_cache.get(paper.get('url', ''), {})
@@ -183,7 +196,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
     <div class="abstract-toolbar"><select class="paper-mode" aria-label="这篇论文的摘要语言"><option value="both">中英对照</option><option value="en">仅英文</option><option value="zh">仅中文</option></select></div>
     <div class="abstract-columns"><section class="abstract-en" lang="en"><h3>ENGLISH</h3><p>{sentence_markup(en, en_ids)}</p></section><section class="abstract-zh" lang="zh-CN"><h3>中文</h3><p>{sentence_markup(zh, zh_ids)}</p></section></div>
   </details>
-  <footer><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span><a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">在 arXiv 阅读 ↗</a></footer>
+  <footer><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span><a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">在 {reading_source} 阅读 ↗</a></footer>
 </article>''')
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     direction_options = "".join(
@@ -195,8 +208,16 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         f'<select id="{c}-score" data-direction-score="{c}" aria-label="{c} 分数">'
         '<option value="4">4 分</option><option value="5" selected>5 分</option>'
         '<option value="4,5">4 和 5 分</option></select></div>'
-        for c in CATEGORIES)
-    content = template.replace("{{DATE}}", escape(target_date_str)).replace("{{DIRECTION_OPTIONS}}", direction_options)
+        for c in categories)
+    display_label = target_date_str
+    if metadata and metadata.get('source') == 'openreview':
+        display_label = f"{metadata['conference']} {metadata['conference_year']}"
+        if metadata.get('paper_status') == 'submitted':
+            display_label += ' · 在审投稿'
+        template = template.replace('Daily ArXiv', 'OpenReview Papers')
+        template = template.replace('(MechInterp=5 OR CompGen=4) AND NOT Systems=5',
+                                    'MechInterp=5 OR CompGen=4')
+    content = template.replace("{{DATE}}", escape(display_label)).replace("{{DIRECTION_OPTIONS}}", direction_options)
     content = content.replace("{{DEFAULT_EXPRESSION}}", escape(DEFAULT_FILTER_EXPRESSION, quote=True))
     content = content.replace("{{DEFAULT_EXPRESSION_JSON}}", json.dumps(DEFAULT_FILTER_EXPRESSION))
     legacy = any("categories" not in p.get("eval", {}) and "category" in p.get("eval", {}) for p in papers)
@@ -229,6 +250,11 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         note += f" · 首次回补日期：{metadata['backfilled_on']}（北京时间）；版本提交日期：{target_date_str}"
     if metadata and metadata.get('date_basis') == 'metadata_datestamp':
         note += f" · OAI 元数据修改日期：{target_date_str}（服务端记录日期）；每篇论文仅保留最新版本，版本提交时间单独记录"
+    if metadata and metadata.get('source') == 'openreview':
+        if metadata.get('paper_status') == 'submitted':
+            note += f" · {metadata['conference']} {metadata['conference_year']} 主会公开在审投稿，尚未录用；不含已决定、撤稿及非公开论文，公开范围可能不完整；请使用 refresh 更新"
+        else:
+            note += f" · {metadata['conference']} {metadata['conference_year']} 主会已录用论文（OpenReview 公开元数据）；当年列表可能继续更新"
     content = content.replace("{{CLASSIFICATION_NOTE}}", escape(note))
     css, js = math_assets()
     content = content.replace("{{MATH_CSS}}", css).replace("{{MATH_JS}}", js)

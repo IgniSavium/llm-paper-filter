@@ -22,7 +22,8 @@ def release_cutoff(now=None, timezone='Asia/Shanghai', day_lag=2):
     return (now.astimezone(ZoneInfo(timezone)).date() - timedelta(days=day_lag)).isoformat()
 
 
-def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None, allow_pending=False):
+def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None, allow_pending=False,
+                update_openreview=False):
     through_date = min(through_date or release_cutoff(), release_cutoff())
     date.fromisoformat(first_date)
     date.fromisoformat(through_date)
@@ -114,6 +115,18 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
                     'COMMON_PROMPT': escape(intro.strip() + '\n\nREADING PREFERENCE' + common)}
     for key, value in replacements.items():
         page = page.replace('{{' + key + '}}', value)
+    if update_openreview:
+        from openreview.site import export_openreview
+        conference_section = export_openreview(PROJECT_DIR / 'openreview', destination)
+    else:
+        # Conference snapshots are updated manually. Daily publication preserves
+        # the existing section and assets, without loading or rendering corpora.
+        previous = destination / 'index.html'
+        existing = previous.read_text(encoding='utf-8') if previous.exists() else ''
+        match = re.search(r'<section id="openreview"[ >].*?</section>', existing, re.S)
+        conference_section = match[0] if match else ''
+    if conference_section:
+        page = page.replace('</main>', conference_section + '\n</main>', 1)
     (destination / 'index.html').write_text(page, encoding='utf-8')
     url = escape(latest['url'] if latest else 'index.html', quote=True)
     (destination / 'latest.html').write_text(f'<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url={url}"><title>最新日报</title></head><body><a href="{url}">阅读最新日报</a></body></html>', encoding='utf-8')
@@ -122,7 +135,7 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
     return entries
 
 
-def publish_site(through_date, model_dir=None, allow_pending=False):
+def publish_site(through_date, model_dir=None, allow_pending=False, update_openreview=False):
     model_dir = Path(model_dir or RUNS_DIR / 'gpt-6-luna_runs')
     root = RUNS_DIR / '.site'
     root.mkdir(parents=True, exist_ok=True)
@@ -145,9 +158,12 @@ def publish_site(through_date, model_dir=None, allow_pending=False):
                 git('remote', 'add', 'origin', remote)
             git('config', 'user.name', 'arXiv Daily Publisher')
             git('config', 'user.email', 'IgniSavium@users.noreply.github.com')
-            entries = export_site(model_dir, checkout, through_date=through_date, allow_pending=allow_pending)
+            entries = export_site(model_dir, checkout, through_date=through_date, allow_pending=allow_pending,
+                                  update_openreview=update_openreview)
             latest_date = next((row['date'] for row in entries if row['url']), None)
             git('add', 'index.html', 'latest.html', 'archive.json', '.nojekyll', 'reports')
+            if (checkout / 'openreview').exists():
+                git('add', '-A', 'openreview')
             if git('diff', '--cached', '--quiet', check=False).returncode == 0:
                 return {'status': 'unchanged', 'latest_date': latest_date}
             git('commit', '-m', f'Publish daily arXiv through {latest_date or "pending first report"}')
@@ -160,11 +176,13 @@ def main():
     parser.add_argument('--through-date', default=release_cutoff())
     parser.add_argument('--output', type=Path, help='Export locally without pushing')
     parser.add_argument('--allow-pending', action='store_true', help='Bootstrap an empty site while the first report is being generated')
+    parser.add_argument('--update-openreview', action='store_true',
+                        help='Manually rebuild conference readers/statistics assets; daily exports preserve the published version')
     args = parser.parse_args()
     if args.output:
-        result = export_site(RUNS_DIR / 'gpt-6-luna_runs', args.output, through_date=args.through_date, allow_pending=args.allow_pending)
+        result = export_site(RUNS_DIR / 'gpt-6-luna_runs', args.output, through_date=args.through_date, allow_pending=args.allow_pending, update_openreview=args.update_openreview)
     else:
-        result = publish_site(args.through_date, allow_pending=args.allow_pending)
+        result = publish_site(args.through_date, allow_pending=args.allow_pending, update_openreview=args.update_openreview)
     print(json.dumps(result, ensure_ascii=False))
 
 

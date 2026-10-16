@@ -1,6 +1,5 @@
 """Backend-independent scoring, translation validation, caches, and HTML reports."""
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from collections import Counter
 import copy
 import hashlib
 import json
@@ -13,7 +12,10 @@ from daily_arxiv.filtering.prompts import CATEGORIES, PROMPT_SHA256, SYSTEM_PROM
 from daily_arxiv.reporting.html import generate_mobile_html_report
 from daily_arxiv.fetching.snapshots import get_papers, load_paper_input, paper_info_digest
 
-MATH_PATTERN = r"(?<!\\)\$\$.*?(?<!\\)\$\$|(?<![\\$])\$(?![\s$])(?:\\.|[^\\$])*?(?<!\s)(?<!\\)\$(?![\d$])|\\\(.*?\\\)|\\\[.*?\\\]"
+from daily_arxiv.math_text import MATH_PATTERN, normalize_math_source
+
+# Increment when semantic validation changes, even if prompt text stays the same.
+TRANSLATION_VALIDATION_VERSION = 3
 TRANSLATION_PROMPT = """Translate each paper's title, abstract, and evaluation reason
 from English into Simplified Chinese, without summarizing or omitting content.
 Each *_parts array contains text fragments separated by formulas. Return the
@@ -96,16 +98,53 @@ def write_json(path, payload):
 def validate_translation_math(source, translated):
     """Preserve source LaTeX formulas and their delimiters."""
     # Dollar signs in prose such as "$1 ... $1,000" denote prices, not math.
-    # An inline closing delimiter cannot be followed by a digit; escaped dollars
-    # inside a formula are allowed, while escaped opening dollars are literal text.
-    source_formulas = Counter(re.findall(MATH_PATTERN, source, re.S))
-    translated_formulas = Counter(re.findall(MATH_PATTERN, translated, re.S))
+    # Preserve order as well as contents: a multiset comparison misses formulas
+    # moved to a different model, metric, or sentence.
+    source_formulas = re.findall(MATH_PATTERN, normalize_math_source(source), re.S)
+    translated_formulas = re.findall(MATH_PATTERN, translated, re.S)
     if source_formulas != translated_formulas:
-        raise ValueError("Translation changed, omitted, or added LaTeX formulas or their delimiters")
+        raise ValueError("Translation changed, reordered, omitted, or added LaTeX formulas or their delimiters")
+
+
+def translation_contract_sha256():
+    """Version translation rules independently from evaluation cache identity."""
+    return hashlib.sha256(json.dumps({
+        'prompt': TRANSLATION_PROMPT, 'math_pattern': MATH_PATTERN,
+        'validation_version': TRANSLATION_VALIDATION_VERSION,
+    }, sort_keys=True).encode()).hexdigest()
+
+
+def validate_translation_content(source, translated):
+    """Reject mechanical formula corruption and substantial untranslated prose."""
+    if not isinstance(translated, str) or not translated.strip():
+        raise ValueError('Translation must be a nonempty string')
+    validate_translation_math(source, translated)
+    for marker in re.findall(r'\bzh_(?:title|abstract|reason)(?:_parts)?\b|⟪FORMULA_\d+⟫', translated):
+        if marker not in source:
+            raise ValueError(f'Translation contains an output protocol marker: {marker}')
+    prose = re.sub(MATH_PATTERN, ' ', translated, flags=re.S)
+    # Keep names, acronyms, short quoted phrases and titles permissible. Long
+    # verbatim runs containing ordinary English function words indicate leakage.
+    for match in re.finditer(
+            r"(?:[A-Za-z][A-Za-z’'\-]*[\s,;:()–—]+){11,}[A-Za-z][A-Za-z’'\-]*", prose):
+        text = match.group()
+        if text in source and len(re.findall(r'\b(?:the|and|of|to|in|for|with|by|a|on|that|is|from)\b', text)) >= 3:
+            raise ValueError(f'Translation retained English prose: {text[:160]!r}')
+
+
+def validate_translated_paper(paper):
+    for field in ('title', 'abstract', 'reason'):
+        source = paper['eval']['reason'] if field == 'reason' else paper[field]
+        translated = paper['eval'].get('zh_reason') if field == 'reason' else paper.get('zh_' + field)
+        try:
+            validate_translation_content(source, translated)
+        except ValueError as exc:
+            raise ValueError(f"Paper {paper.get('openreview_id', paper.get('url', paper['title']))}, {field}: {exc}") from exc
 
 
 def split_translation_text(text):
     """Keep formulas locally and send only the intervening prose for translation."""
+    text = normalize_math_source(text)
     parts, formulas, start = [], [], 0
     for match in re.finditer(MATH_PATTERN, text, re.S):
         parts.append(text[start:match.start()])
@@ -133,10 +172,20 @@ def assemble_translation(source, translated_parts):
             raise TranslationContentError("Translated text fragments must be strings")
         if not original.strip():
             if translated.strip():
-                raise TranslationContentError("Empty fragment acquired unexpected text")
+                raise TranslationContentError(
+                    f'Empty fragment acquired unexpected text at index {index}: {translated[:160]!r}. '
+                    'Return an empty string at this index; keep neighboring prose in its own slots')
             translated = original
         elif not translated.strip():
-            raise TranslationContentError("Translation omitted a text fragment")
+            # Formula-adjacent separators such as '-' and '%-' carry no prose
+            # to translate. Restore them verbatim when the model leaves them blank.
+            if not any(character.isalnum() for character in original):
+                translated = original
+            else:
+                raise TranslationContentError(
+                    f'Translation omitted a text fragment at index {index}: {original[:160]!r}. '
+                    'Translate this fragment as a nonempty Chinese phrase in the same array slot; '
+                    'do not merge it into a neighboring slot')
         if re.search(MATH_PATTERN, translated, re.S):
             raise TranslationContentError("Translated prose contains an unexpected formula")
         if re.search(r'⟪FORMULA_\d+⟫', translated):
@@ -145,7 +194,7 @@ def assemble_translation(source, translated_parts):
         if index < len(formulas):
             output.append(formulas[index])
     result = "".join(output)
-    validate_translation_math(source, result)
+    validate_translation_content(source, result)
     return result
 
 
@@ -206,7 +255,7 @@ def process_batches(papers, client, cache_dir, batch_size=3, translation=False, 
                 if translation:
                     for field in ('title', 'abstract', 'reason'):
                         source = paper['eval']['reason'] if field == 'reason' else paper[field]
-                        validate_translation_math(source, results[paper_id]['zh_' + field])
+                        validate_translation_content(source, results[paper_id]['zh_' + field])
                 continue
             except (ValueError, OSError, TypeError):
                 results.pop(paper_id, None)
@@ -241,11 +290,21 @@ def process_batches(papers, client, cache_dir, batch_size=3, translation=False, 
 
     batches = [pending[start:start + batch_size] for start in range(0, len(pending), batch_size)]
     completed = 0
+    translation_failures = []
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = [executor.submit(run_batch, batch) for batch in batches]
         try:
             for future in as_completed(futures):
-                batch, received = future.result()
+                try:
+                    batch, received = future.result()
+                except TranslationContentError as exc:
+                    if not translation:
+                        raise
+                    # Valid siblings are already cached by run_batch. Finish the
+                    # other batches before asking the queue to retry failed papers.
+                    translation_failures.append(str(exc))
+                    print(f'Translation deferred until next run: {exc}', flush=True)
+                    continue
                 results.update(received)
                 completed += len(batch)
                 print(f"{stage}: completed {completed}/{len(pending)} pending papers", flush=True)
@@ -253,6 +312,11 @@ def process_batches(papers, client, cache_dir, batch_size=3, translation=False, 
             for future in futures:
                 future.cancel()
             raise
+    if translation_failures:
+        raise TranslationContentError(
+            f'{len(translation_failures)} translation batches still need retry; '
+            'all other batches were processed and valid results cached. '
+            + '; '.join(translation_failures[:5]))
     output = copy.deepcopy(papers)
     for index, paper in enumerate(output):
         result = results[str(index)]
@@ -266,6 +330,9 @@ def process_batches(papers, client, cache_dir, batch_size=3, translation=False, 
 
 
 def save_reports(papers, translated, target_date, threshold, save_dir, input_digest=None, source_metadata=None):
+    # Validate the entire translated set before replacing any report files.
+    for paper in translated:
+        validate_translated_paper(paper)
     scoring_mode = "per_direction" if all(isinstance(p.get("eval", {}).get("scores"), dict) for p in papers) else "legacy_overall"
     if scoring_mode == "per_direction":
         for paper in papers:
@@ -281,10 +348,16 @@ def save_reports(papers, translated, target_date, threshold, save_dir, input_dig
                                 "threshold_used": threshold, "new_papers": new_count,
                                 "version_updates": len(rows) - new_count,
                                 "filter_prompt_sha256": PROMPT_SHA256,
-                                "filter_categories": list(CATEGORIES), "scoring_mode": scoring_mode}, key: rows}
+                                "filter_categories": list(CATEGORIES), "scoring_mode": scoring_mode,
+                                "translation_contract_sha256": translation_contract_sha256()}, key: rows}
         if input_digest is not None:
             payload["metadata"]["paper_info_sha256"] = input_digest
         payload["metadata"].update(source_metadata or {})
+        if (source_metadata or {}).get('source') == 'openreview':
+            payload['metadata'].pop('new_papers', None)
+            payload['metadata'].pop('version_updates', None)
+            count_key = 'submitted_papers' if (source_metadata or {}).get('paper_status') == 'submitted' else 'accepted_papers'
+            payload['metadata'][count_key] = len(rows)
         path = Path(save_dir) / folder / f"{folder}_{target_date}.json"
         write_json(path, payload)
         print(f"Saved: {path}")
@@ -302,6 +375,7 @@ SOURCE_METADATA_KEYS = (
     'discovery_method', 'collected_on', 'report_timezone', 'submission_date_range',
     'arxiv_categories', 'metadata_datestamp_range', 'official_announcement_date_verified',
     'note', 'query_start_utc', 'query_end_utc',
+    'conference', 'conference_year', 'venueid', 'api_url', 'paper_status', 'track', 'fetched_at', 'coverage',
 )
 
 
@@ -327,13 +401,16 @@ def load_filter_input(args):
     return papers, date, source_metadata
 
 
-def prepare_records(records, translation=False):
+def prepare_records(records, translation=False, fragments_only=False):
     submitted = copy.deepcopy(records)
     if translation:
         for record in submitted:
             for field in ('title', 'abstract', 'reason'):
                 parts, formulas = split_translation_text(record[field])
                 record[field + '_parts'] = parts
+                if fragments_only:
+                    record.pop(field)
+                    continue
                 # Context retains the boundaries but offers no raw formulas for
                 # the model to copy back into translated prose. Assembly uses
                 # the untouched source record, never these context markers.
@@ -342,17 +419,18 @@ def prepare_records(records, translation=False):
     return submitted
 
 
-def paper_prompt(instruction, records, translation=False):
+def paper_prompt(instruction, records, translation=False, fragments_only=False):
     contract = ''
     if translation:
         lengths = {r['id']: {field: len(split_translation_text(r[field])[0])
                             for field in ('title', 'abstract', 'reason')} for r in records}
-        contract = ('\n\nFormula context markers ⟪FORMULA_n⟫ are not text to translate. '
+        context_rule = ('' if fragments_only else 'Formula context markers ⟪FORMULA_n⟫ are not text to translate. ')
+        contract = ('\n\n' + context_rule +
                     'Never put markers or formulas in output. Translate each array element separately, '
                     'including empty elements; never merge neighboring elements. Required output array lengths by paper id: '
                     + json.dumps(lengths))
     return (instruction + '\n\n' + DATA_BOUNDARY + contract + '\n\nPaper data (JSON):\n'
-            + json.dumps(prepare_records(records, translation), ensure_ascii=False))
+            + json.dumps(prepare_records(records, translation, fragments_only), ensure_ascii=False))
 
 
 def run_filter(papers, client, cache_dir, threshold=4, batch_size=3,
