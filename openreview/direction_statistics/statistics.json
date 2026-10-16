@@ -1,0 +1,598 @@
+{
+  "acceptance_statistics": [
+    {
+      "conference": "ICLR",
+      "year": 2023,
+      "accepted": 1574,
+      "submitted": 4938,
+      "rate_percent": 31.87525313892264,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2023/ICLR2023-Fact_Sheet.pdf",
+      "source_title": "ICLR 2023 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 1574,
+      "display_submitted": 4938
+    },
+    {
+      "conference": "ICLR",
+      "year": 2024,
+      "accepted": 2260,
+      "submitted": 7262,
+      "rate_percent": 31.120903332415313,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2024/ICLR2024-Fact_Sheet.pdf",
+      "source_title": "ICLR 2024 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 2260,
+      "display_submitted": 7262
+    },
+    {
+      "conference": "ICLR",
+      "year": 2025,
+      "accepted": 3704,
+      "submitted": 11603,
+      "rate_percent": 31.922778591743516,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2025/ICLR2025_Fact_Sheet.pdf",
+      "source_title": "ICLR 2025 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 3704,
+      "display_submitted": 11603
+    },
+    {
+      "conference": "ICLR",
+      "year": 2026,
+      "accepted": 5357,
+      "submitted": 19525,
+      "rate_percent": 27.43661971830986,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2026/ICLR2026_Fact_Sheet.pdf",
+      "source_title": "ICLR 2026 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 5357,
+      "display_submitted": 19525
+    },
+    {
+      "conference": "ICML",
+      "year": 2023,
+      "accepted": null,
+      "submitted": null,
+      "rate_percent": 28.0,
+      "rate_basis": "estimated_from_adjacent_years",
+      "rate_estimated": true,
+      "source_url": "https://media.icml.cc/Conferences/ICML2024/ICML2024_Fact_Sheet.pdf",
+      "supporting_source_urls": [
+        "https://media.icml.cc/Conferences/ICML2024/ICML2024_Fact_Sheet.pdf",
+        "https://media.icml.cc/Conferences/ICML2025/ICML2025_Fact_Sheet.pdf"
+      ],
+      "source_title": "ICML 2023 estimate from 2024/2025 official rates",
+      "estimation_note": "2024 官方录用率 27.5%、2025 为 27.0%，按一年线性外推估计 2023 为 28.0%；录用数采用本地快照，投稿数由录用数除以估计录用率计算。",
+      "accepted_count_basis": "local_snapshot",
+      "submitted_estimated": true,
+      "display_accepted": 1828,
+      "display_submitted": 6529
+    },
+    {
+      "conference": "ICML",
+      "year": 2024,
+      "accepted": null,
+      "submitted": null,
+      "rate_percent": 27.5,
+      "rate_basis": "official_reported_rate",
+      "source_url": "https://media.icml.cc/Conferences/ICML2024/ICML2024_Fact_Sheet.pdf",
+      "source_title": "ICML 2024 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "local_snapshot",
+      "submitted_estimated": true,
+      "display_accepted": 2610,
+      "display_submitted": 9491
+    },
+    {
+      "conference": "ICML",
+      "year": 2025,
+      "accepted": 3260,
+      "submitted": null,
+      "rate_percent": 27.0,
+      "rate_basis": "official_reported_rate",
+      "source_url": "https://media.icml.cc/Conferences/ICML2025/ICML2025_Fact_Sheet.pdf",
+      "source_title": "ICML 2025 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": true,
+      "display_accepted": 3260,
+      "display_submitted": 12074
+    },
+    {
+      "conference": "ICML",
+      "year": 2026,
+      "accepted": 6552,
+      "submitted": 24661,
+      "rate_percent": 26.568265682656826,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.icml.cc/Conferences/ICML2026/ICML2026_Fact_Sheet.pdf",
+      "source_title": "ICML 2026 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 6552,
+      "display_submitted": 24661
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2023,
+      "accepted": 3218,
+      "submitted": 12343,
+      "rate_percent": 26.07145750627886,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.neurips.cc/Conferences/NeurIPS2023/NeurIPS2023-Fact_Sheet.pdf",
+      "source_title": "NeurIPS 2023 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 3218,
+      "display_submitted": 12343
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2024,
+      "accepted": 4037,
+      "submitted": 15671,
+      "rate_percent": 25.76095973454151,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.neurips.cc/Conferences/NeurIPS2024/NeurIPS2024-Fact_Sheet.pdf",
+      "source_title": "NeurIPS 2024 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 4037,
+      "display_submitted": 15671
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2025,
+      "accepted": 5290,
+      "submitted": 21575,
+      "rate_percent": 24.519119351100812,
+      "rate_basis": "official_counts",
+      "source_url": "https://media.neurips.cc/Conferences/NeurIPS2025/press/NeurIPS2025-Fact_Sheet.pdf",
+      "source_title": "NeurIPS 2025 Official Fact Sheet",
+      "verified_on": "2026-10-16",
+      "accepted_count_basis": "official",
+      "submitted_estimated": false,
+      "display_accepted": 5290,
+      "display_submitted": 21575
+    }
+  ],
+  "missing_acceptance_rates": [],
+  "generated_at": "2026-10-16T20:39:19+08:00",
+  "denominator": "All scored papers in the same conference/year/status",
+  "score": 5,
+  "metrics": {
+    "mech": "MechInterp = 5",
+    "comp": "CompGen = 5",
+    "either": "MechInterp = 5 OR CompGen = 5",
+    "both": "MechInterp = 5 AND CompGen = 5"
+  },
+  "rows": [
+    {
+      "conference": "ICLR",
+      "year": 2023,
+      "status": "accepted",
+      "total": 1573,
+      "counts": {
+        "mech": 7,
+        "comp": 17,
+        "either": 24,
+        "both": 0
+      },
+      "rates": {
+        "mech": 0.44500953591862685,
+        "comp": 1.080737444373808,
+        "either": 1.5257469802924348,
+        "both": 0.0
+      },
+      "fetched_at": "2026-10-14T02:02:10.846341+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICLR_2023/all_papers/all_papers_2023-01-01.json",
+      "paper_info_sha256": "36ea214b99a09899faa5e7ea06b047b844ebfffa83ae659024c2d2741fc692bd",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": null
+    },
+    {
+      "conference": "ICML",
+      "year": 2023,
+      "status": "accepted",
+      "total": 1828,
+      "counts": {
+        "mech": 9,
+        "comp": 6,
+        "either": 15,
+        "both": 0
+      },
+      "rates": {
+        "mech": 0.4923413566739606,
+        "comp": 0.3282275711159737,
+        "either": 0.8205689277899343,
+        "both": 0.0
+      },
+      "fetched_at": "2026-10-14T02:00:51.816523+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICML_2023/all_papers/all_papers_2023-01-01.json",
+      "paper_info_sha256": "fa803d5c71100c850d823d544f6ac4572c23b748cc73095c5c92c05419b56778",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": null
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2023,
+      "status": "accepted",
+      "total": 3218,
+      "counts": {
+        "mech": 19,
+        "comp": 12,
+        "either": 31,
+        "both": 0
+      },
+      "rates": {
+        "mech": 0.5904288377874456,
+        "comp": 0.3729024238657551,
+        "either": 0.9633312616532007,
+        "both": 0.0
+      },
+      "fetched_at": "2026-10-14T02:01:06.764249+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/NeurIPS_2023/all_papers/all_papers_2023-01-01.json",
+      "paper_info_sha256": "5c759ad3a1f985c859801d7c791ac22e4bf200acea90c5d124e8a2a52d6fc080",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": null
+    },
+    {
+      "conference": "ICLR",
+      "year": 2024,
+      "status": "accepted",
+      "total": 2260,
+      "counts": {
+        "mech": 27,
+        "comp": 24,
+        "either": 51,
+        "both": 0
+      },
+      "rates": {
+        "mech": 1.1946902654867257,
+        "comp": 1.0619469026548671,
+        "either": 2.256637168141593,
+        "both": 0.0
+      },
+      "fetched_at": "2026-10-14T02:01:19.706083+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICLR_2024/all_papers/all_papers_2024-01-01.json",
+      "paper_info_sha256": "eb91f2101f1e01a6fac641b58790a8aa2405fe8cd1ab1aee89a4e7e19e82e29c",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 20,
+          "percentage_points": 0.749680729568099
+        },
+        "comp": {
+          "count": 7,
+          "percentage_points": -0.0187905417189409
+        },
+        "either": {
+          "count": 27,
+          "percentage_points": 0.7308901878491583
+        },
+        "both": {
+          "count": 0,
+          "percentage_points": 0.0
+        }
+      }
+    },
+    {
+      "conference": "ICML",
+      "year": 2024,
+      "status": "accepted",
+      "total": 2610,
+      "counts": {
+        "mech": 25,
+        "comp": 10,
+        "either": 35,
+        "both": 0
+      },
+      "rates": {
+        "mech": 0.9578544061302682,
+        "comp": 0.38314176245210724,
+        "either": 1.3409961685823755,
+        "both": 0.0
+      },
+      "fetched_at": "2026-10-14T02:00:53.896593+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICML_2024/all_papers/all_papers_2024-01-01.json",
+      "paper_info_sha256": "e220e92a39225a79714749fd5fc53dd01918ebcb7f3d47adee2b38647cf10816",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 16,
+          "percentage_points": 0.46551304945630756
+        },
+        "comp": {
+          "count": 4,
+          "percentage_points": 0.05491419133613351
+        },
+        "either": {
+          "count": 20,
+          "percentage_points": 0.5204272407924412
+        },
+        "both": {
+          "count": 0,
+          "percentage_points": 0.0
+        }
+      }
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2024,
+      "status": "accepted",
+      "total": 4035,
+      "counts": {
+        "mech": 44,
+        "comp": 16,
+        "either": 59,
+        "both": 1
+      },
+      "rates": {
+        "mech": 1.090458488228005,
+        "comp": 0.3965303593556382,
+        "either": 1.4622057001239157,
+        "both": 0.024783147459727387
+      },
+      "fetched_at": "2026-10-14T02:01:10.282652+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/NeurIPS_2024/all_papers/all_papers_2024-01-01.json",
+      "paper_info_sha256": "a03ff05b6f2af239009751b930b1c7c7a59d3828bf4aa64654df89dde06a8c17",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 25,
+          "percentage_points": 0.5000296504405595
+        },
+        "comp": {
+          "count": 4,
+          "percentage_points": 0.023627935489883067
+        },
+        "either": {
+          "count": 28,
+          "percentage_points": 0.498874438470715
+        },
+        "both": {
+          "count": 1,
+          "percentage_points": 0.024783147459727387
+        }
+      }
+    },
+    {
+      "conference": "ICLR",
+      "year": 2025,
+      "status": "accepted",
+      "total": 3703,
+      "counts": {
+        "mech": 67,
+        "comp": 23,
+        "either": 88,
+        "both": 2
+      },
+      "rates": {
+        "mech": 1.8093437753173105,
+        "comp": 0.6211180124223602,
+        "either": 2.3764515257899,
+        "both": 0.054010261949770454
+      },
+      "fetched_at": "2026-10-14T02:01:22.521528+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICLR_2025/all_papers/all_papers_2025-01-01.json",
+      "paper_info_sha256": "5a906094fa9c4897a96da267de0aaa13873eba5d91471c244ab98a4e92618e77",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 40,
+          "percentage_points": 0.6146535098305848
+        },
+        "comp": {
+          "count": -1,
+          "percentage_points": -0.44082889023250693
+        },
+        "either": {
+          "count": 37,
+          "percentage_points": 0.11981435764830684
+        },
+        "both": {
+          "count": 2,
+          "percentage_points": 0.054010261949770454
+        }
+      }
+    },
+    {
+      "conference": "ICML",
+      "year": 2025,
+      "status": "accepted",
+      "total": 3257,
+      "counts": {
+        "mech": 57,
+        "comp": 15,
+        "either": 71,
+        "both": 1
+      },
+      "rates": {
+        "mech": 1.750076757752533,
+        "comp": 0.46054651519803497,
+        "either": 2.1799201719373653,
+        "both": 0.030703101013202335
+      },
+      "fetched_at": "2026-10-14T02:00:57.054327+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICML_2025/all_papers/all_papers_2025-01-01.json",
+      "paper_info_sha256": "faf3739566e6afe02ac12f4724e747d50313afd4dfcec827e807cb67e1db53e5",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 32,
+          "percentage_points": 0.7922223516222647
+        },
+        "comp": {
+          "count": 5,
+          "percentage_points": 0.07740475274592773
+        },
+        "either": {
+          "count": 36,
+          "percentage_points": 0.8389240033549898
+        },
+        "both": {
+          "count": 1,
+          "percentage_points": 0.030703101013202335
+        }
+      }
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2025,
+      "status": "accepted",
+      "total": 5286,
+      "counts": {
+        "mech": 91,
+        "comp": 26,
+        "either": 116,
+        "both": 1
+      },
+      "rates": {
+        "mech": 1.7215285660234583,
+        "comp": 0.4918653045781309,
+        "either": 2.1944759742716613,
+        "both": 0.018917896329928113
+      },
+      "fetched_at": "2026-10-14T02:01:14.839291+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/NeurIPS_2025/all_papers/all_papers_2025-01-01.json",
+      "paper_info_sha256": "7afc6137720816d902eaac3ad56e7ff3c0c878463f0749ec04513a7da0eefbb0",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 47,
+          "percentage_points": 0.6310700777954532
+        },
+        "comp": {
+          "count": 10,
+          "percentage_points": 0.0953349452224927
+        },
+        "either": {
+          "count": 57,
+          "percentage_points": 0.7322702741477456
+        },
+        "both": {
+          "count": 0,
+          "percentage_points": -0.005865251129799274
+        }
+      }
+    },
+    {
+      "conference": "ICLR",
+      "year": 2026,
+      "status": "accepted",
+      "total": 5351,
+      "counts": {
+        "mech": 113,
+        "comp": 24,
+        "either": 136,
+        "both": 1
+      },
+      "rates": {
+        "mech": 2.1117548121846386,
+        "comp": 0.4485142963931975,
+        "either": 2.541581012894786,
+        "both": 0.018688095683049896
+      },
+      "fetched_at": "2026-10-14T02:01:26.961075+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICLR_2026/all_papers/all_papers_2026-01-01.json",
+      "paper_info_sha256": "91d91b9250d6bf3662bc92383eb2a514e892b82466e157a9aa7632b5b005990c",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 46,
+          "percentage_points": 0.30241103686732806
+        },
+        "comp": {
+          "count": 1,
+          "percentage_points": -0.1726037160291627
+        },
+        "either": {
+          "count": 48,
+          "percentage_points": 0.16512948710488606
+        },
+        "both": {
+          "count": -1,
+          "percentage_points": -0.03532216626672056
+        }
+      }
+    },
+    {
+      "conference": "ICML",
+      "year": 2026,
+      "status": "accepted",
+      "total": 6341,
+      "counts": {
+        "mech": 136,
+        "comp": 39,
+        "either": 172,
+        "both": 3
+      },
+      "rates": {
+        "mech": 2.1447721179624666,
+        "comp": 0.6150449455921779,
+        "either": 2.7125059138937075,
+        "both": 0.04731114966093676
+      },
+      "fetched_at": "2026-10-14T02:01:03.655827+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICML_2026/all_papers/all_papers_2026-01-01.json",
+      "paper_info_sha256": "e6ff6bcaeefbd1d9ffdada0abba5b351308229951d534c1c65fbda5fce16b12f",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 79,
+          "percentage_points": 0.3946953602099337
+        },
+        "comp": {
+          "count": 24,
+          "percentage_points": 0.15449843039414296
+        },
+        "either": {
+          "count": 101,
+          "percentage_points": 0.5325857419563422
+        },
+        "both": {
+          "count": 2,
+          "percentage_points": 0.016608048647734425
+        }
+      }
+    },
+    {
+      "conference": "ICLR",
+      "year": 2027,
+      "status": "submitted",
+      "total": 42172,
+      "counts": {
+        "mech": 1074,
+        "comp": 198,
+        "either": 1256,
+        "both": 16
+      },
+      "rates": {
+        "mech": 2.54671345916722,
+        "comp": 0.46950583325429196,
+        "either": 2.9782794271080335,
+        "both": 0.037939865313478136
+      },
+      "fetched_at": "2026-10-15T01:55:33.142256+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/ICLR_2027_submitted/all_papers/all_papers_2027-01-01.json",
+      "paper_info_sha256": "c68254171cb00e88d678d5eeab5099ec35e2e0747faa67c7ce563052984418b7",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": null
+    }
+  ]
+}

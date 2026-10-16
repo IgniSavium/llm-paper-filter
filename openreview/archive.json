@@ -1,0 +1,206 @@
+[
+  {
+    "conference": "ICLR",
+    "year": 2027,
+    "status": "submitted",
+    "papers": 4702,
+    "url": "openreview/ICLR_2027_submitted/html_reports/report_2027-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 2117,
+        "5": 1074
+      },
+      "CompGen": {
+        "4": 1467,
+        "5": 198
+      }
+    }
+  },
+  {
+    "conference": "ICLR",
+    "year": 2026,
+    "status": "accepted",
+    "papers": 509,
+    "url": "openreview/ICLR_2026/html_reports/report_2026-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 243,
+        "5": 113
+      },
+      "CompGen": {
+        "4": 150,
+        "5": 24
+      }
+    }
+  },
+  {
+    "conference": "ICML",
+    "year": 2026,
+    "status": "accepted",
+    "papers": 626,
+    "url": "openreview/ICML_2026/html_reports/report_2026-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 326,
+        "5": 136
+      },
+      "CompGen": {
+        "4": 161,
+        "5": 39
+      }
+    }
+  },
+  {
+    "conference": "ICLR",
+    "year": 2025,
+    "status": "accepted",
+    "papers": 337,
+    "url": "openreview/ICLR_2025/html_reports/report_2025-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 160,
+        "5": 67
+      },
+      "CompGen": {
+        "4": 96,
+        "5": 23
+      }
+    }
+  },
+  {
+    "conference": "ICML",
+    "year": 2025,
+    "status": "accepted",
+    "papers": 226,
+    "url": "openreview/ICML_2025/html_reports/report_2025-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 106,
+        "5": 57
+      },
+      "CompGen": {
+        "4": 61,
+        "5": 15
+      }
+    }
+  },
+  {
+    "conference": "NeurIPS",
+    "year": 2025,
+    "status": "accepted",
+    "papers": 396,
+    "url": "openreview/NeurIPS_2025/html_reports/report_2025-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 191,
+        "5": 91
+      },
+      "CompGen": {
+        "4": 106,
+        "5": 26
+      }
+    }
+  },
+  {
+    "conference": "ICLR",
+    "year": 2024,
+    "status": "accepted",
+    "papers": 172,
+    "url": "openreview/ICLR_2024/html_reports/report_2024-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 68,
+        "5": 27
+      },
+      "CompGen": {
+        "4": 61,
+        "5": 24
+      }
+    }
+  },
+  {
+    "conference": "ICML",
+    "year": 2024,
+    "status": "accepted",
+    "papers": 151,
+    "url": "openreview/ICML_2024/html_reports/report_2024-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 75,
+        "5": 25
+      },
+      "CompGen": {
+        "4": 47,
+        "5": 10
+      }
+    }
+  },
+  {
+    "conference": "NeurIPS",
+    "year": 2024,
+    "status": "accepted",
+    "papers": 269,
+    "url": "openreview/NeurIPS_2024/html_reports/report_2024-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 133,
+        "5": 44
+      },
+      "CompGen": {
+        "4": 86,
+        "5": 16
+      }
+    }
+  },
+  {
+    "conference": "ICLR",
+    "year": 2023,
+    "status": "accepted",
+    "papers": 123,
+    "url": "openreview/ICLR_2023/html_reports/report_2023-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 51,
+        "5": 7
+      },
+      "CompGen": {
+        "4": 51,
+        "5": 17
+      }
+    }
+  },
+  {
+    "conference": "ICML",
+    "year": 2023,
+    "status": "accepted",
+    "papers": 110,
+    "url": "openreview/ICML_2023/html_reports/report_2023-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 52,
+        "5": 9
+      },
+      "CompGen": {
+        "4": 45,
+        "5": 6
+      }
+    }
+  },
+  {
+    "conference": "NeurIPS",
+    "year": 2023,
+    "status": "accepted",
+    "papers": 215,
+    "url": "openreview/NeurIPS_2023/html_reports/report_2023-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 102,
+        "5": 19
+      },
+      "CompGen": {
+        "4": 89,
+        "5": 12
+      }
+    }
+  }
+]
