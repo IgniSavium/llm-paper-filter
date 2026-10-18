@@ -6,6 +6,7 @@ import re
 import shutil
 
 from daily_arxiv.reporting.html import generate_mobile_html_report
+from daily_arxiv.reporting.artifacts import load_completed_report
 
 CATEGORIES = ('MechInterp', 'CompGen')
 CONFERENCES = ('NeurIPS', 'ICML', 'ICLR')
@@ -22,7 +23,8 @@ def export_openreview(source, destination):
     output.mkdir(parents=True, exist_ok=True)
     rows, keep = [], set()
     for translated in corpora:
-        payload = json.loads(translated.read_text(encoding='utf-8'))
+        complete = load_completed_report(translated.parent.parent, translated.stem.removeprefix('hits_zh_'))
+        payload = complete['hits_zh']
         metadata = payload['metadata']
         conference, year = metadata['conference'], metadata['conference_year']
         status = metadata.get('paper_status', 'accepted')
@@ -33,9 +35,6 @@ def export_openreview(source, destination):
         if day != f'{year}-01-01' or translated.name != f'hits_zh_{day}.json':
             raise ValueError(f'Mismatched conference report date: {translated}')
         # Inference may be in progress: only export finalized readers.
-        original = translated.parent.parent / 'html_reports' / f'report_{day}.html'
-        if not original.is_file():
-            raise ValueError(f'Missing completed conference reader: {original}')
         papers = [p for p in payload['hits_zh']
                   if any(p['eval']['scores'].get(c, 0) in (4, 5) for c in CATEGORIES)]
         name = f'{conference}_{year}' + ('_submitted' if status == 'submitted' else '')
@@ -43,7 +42,8 @@ def export_openreview(source, destination):
             raise ValueError(f'Duplicate conference report: {name}')
         keep.add(name)
         # Reuse the bilingual renderer without changing local inference artifacts.
-        report = Path(generate_mobile_html_report(papers, day, output / name, metadata))
+        report = Path(generate_mobile_html_report(papers, day, output / name, metadata,
+                                                  page_size=50, asset_dir=output / 'assets'))
         content = report.read_text(encoding='utf-8')
         nav = '<nav style="padding:12px 24px"><a href="../../../index.html#conference-reports">← 顶会论文归档</a></nav>'
         content = re.sub(r'(<body\b[^>]*>)', lambda m: m[1] + nav, content, count=1, flags=re.I)

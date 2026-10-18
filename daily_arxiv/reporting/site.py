@@ -13,6 +13,8 @@ from zoneinfo import ZoneInfo
 
 from daily_arxiv.paths import PROJECT_DIR, RUNS_DIR
 from daily_arxiv.filtering.prompts import CATEGORIES, REVIEW_INSTRUCTIONS
+from daily_arxiv.reporting.artifacts import load_completed_report
+from daily_arxiv.reporting.html import generate_mobile_html_report
 
 FIRST_DATE = '2026-10-08'
 
@@ -38,12 +40,11 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
         day = match[1]
         # Require final translated output as well as HTML; only run this exporter
         # after the runner has finished (the scheduler supplies its completed date).
-        payload = json.loads(translated_path.read_text())
-        if payload['metadata']['target_date'] != day:
-            raise ValueError(f'Mismatched report metadata: {day}')
+        complete = load_completed_report(model_dir, day)
+        payload = complete['hits_zh']
         if not payload['hits_zh']:
-            all_papers = json.loads((Path(model_dir) / 'all_papers' / f'all_papers_{day}.json').read_text())
-            hits = json.loads((Path(model_dir) / 'hits' / f'hits_{day}.json').read_text())
+            all_papers = complete['all_papers']
+            hits = complete['hits']
             if (all_papers['metadata']['target_date'] != day or hits['metadata']['target_date'] != day
                     or hits['hits']):
                 raise ValueError(f'Incomplete empty report: {day}')
@@ -51,13 +52,15 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
             entries.append({'date': day, 'url': None, 'papers': 0, 'status': status,
                             'score_5_counts': {category: 0 for category in CATEGORIES}})
             continue
-        source = Path(model_dir) / 'html_reports' / f'report_{day}.html'
+        # Render from the validated generation. This also upgrades legacy readers
+        # locally, without rescoring or trusting their old, unversioned HTML.
+        source = Path(generate_mobile_html_report(payload['hits_zh'], day, destination,
+                                                  metadata=payload['metadata']))
         content = source.read_text(encoding='utf-8')
-        if '</html>' not in content.lower():
-            raise ValueError(f'Incomplete HTML: {source}')
         nav = '<nav style="padding:12px 24px"><a href="../index.html">← 日期归档</a></nav>'
         content = re.sub(r'(<body\b[^>]*>)', lambda m: m[1] + nav, content, count=1, flags=re.I)
         (reports / source.name).write_text(content, encoding='utf-8')
+        source.unlink()
         counts = {category: sum(p.get('eval', {}).get('scores', {}).get(category) == 5
                                 for p in payload['hits_zh']) for category in CATEGORIES}
         entries.append({'date': day, 'url': 'reports/' + source.name,
@@ -131,6 +134,9 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
     url = escape(latest['url'] if latest else 'index.html', quote=True)
     (destination / 'latest.html').write_text(f'<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url={url}"><title>最新日报</title></head><body><a href="{url}">阅读最新日报</a></body></html>', encoding='utf-8')
     (destination / '.nojekyll').touch()
+    temporary_reports = destination / 'html_reports'
+    if temporary_reports.is_dir() and not any(temporary_reports.iterdir()):
+        temporary_reports.rmdir()
     (destination / 'archive.json').write_text(json.dumps(entries, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     return entries
 
@@ -161,9 +167,9 @@ def publish_site(through_date, model_dir=None, allow_pending=False, update_openr
             entries = export_site(model_dir, checkout, through_date=through_date, allow_pending=allow_pending,
                                   update_openreview=update_openreview)
             latest_date = next((row['date'] for row in entries if row['url']), None)
-            git('add', 'index.html', 'latest.html', 'archive.json', '.nojekyll', 'reports')
-            if (checkout / 'openreview').exists():
-                git('add', '-A', 'openreview')
+            # The isolated checkout contains only website artifacts; this also
+            # handles a site with no linked reports and stages removed pages.
+            git('add', '-A')
             if git('diff', '--cached', '--quiet', check=False).returncode == 0:
                 return {'status': 'unchanged', 'latest_date': latest_date}
             git('commit', '-m', f'Publish daily arXiv through {latest_date or "pending first report"}')

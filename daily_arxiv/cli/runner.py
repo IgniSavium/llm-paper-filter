@@ -67,7 +67,6 @@ def build_commands(args, input_path, date, batch=None):
 
 
 def run_updates(args):
-    from daily_arxiv.reporting.html import generate_mobile_html_report
     args.runs_dir.mkdir(parents=True, exist_ok=True)
     with (args.runs_dir / '.update_runner.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -88,15 +87,6 @@ def run_updates(args):
                     print('Update interrupted; rerun to resume the saved shared batch and inference caches.', flush=True)
                     return result.returncode if result.returncode > 0 else 1
                 output = model_dir / 'updates' / batch if batch else model_dir
-                metadata = json.loads(source.read_text()).get('metadata', {})
-                if metadata.get('source') == 'recently_public':
-                    extra = {key: metadata[key] for key in ('source', 'batch_id', 'discovered_at', 'report_timezone', 'query_start_utc', 'query_end_utc', 'submission_date_range', 'discovery_method', 'arxiv_categories', 'metadata_datestamp_range', 'batch_kind', 'announcement_date', 'date_basis', 'collected_on') if key in metadata}
-                    for folder in ('all_papers', 'hits', 'hits_zh'):
-                        path = output / folder / f'{folder}_{date}.json'
-                        payload = json.loads(path.read_text())
-                        payload['metadata'].update(extra)
-                        path.write_text(json.dumps(payload, ensure_ascii=False, indent=4), encoding='utf-8')
-                    generate_mobile_html_report(payload['hits_zh'], date, str(output), metadata=payload['metadata'])
                 ran = True
                 print(f'Completed report: {output / "html_reports" / ("report_" + date + ".html")}', flush=True)
             if args.initial_backfill:
@@ -215,9 +205,6 @@ def main(argv=None):
         return 0
 
     papers, date = get_papers(date, args.paper_info_dir, args.max_results, refresh=args.refresh)
-    if not papers:
-        print("No publicly available metadata changes for this date; inference and empty report skipped.")
-        return 0
     digest = paper_info_digest(papers)
     print(f"Runner: {date}, {len(papers)} papers, input SHA-256 {digest}", flush=True)
     # Freeze this run's corpus: an external refresh between model runs cannot change the input.

@@ -7,7 +7,10 @@ AI-filtered, bilingual arXiv and conference reading lists by [IgniSavium](https:
 Fetches papers from **cs.AI, cs.LG, cs.CL, and stat.ML**, independently scores
 **MechInterp, CompGen, Reasoning, and Systems** from 1–5, and translates selected
 papers into Chinese. Reports support custom filters, formulas, bookmarks, and
-light/dark themes. The website groups reports by month and shows each direction's
+light/dark themes. Bookmarks and reading order can be backed up to a local JSON
+file and restored after clearing browser data. Conference web readers load 50
+papers per page; the original offline reports remain self-contained.
+The website groups reports by month and shows each direction's
 5-point paper count.
 
 ![Bilingual reading report](imgs/html_gui.png)
@@ -82,7 +85,15 @@ State and logs are in `daily_arxiv/runs/.scheduler/`. To change options, stop
 with `python daily_arxiv/scheduler.py stop`, then start again. After a machine
 restart, start the scheduler again using the same state directory.
 
-To export locally or publish manually after a run:
+To preview the complete website locally after a run:
+
+```bash
+python -m daily_arxiv.reporting.site --update-openreview --output /tmp/arxiv-site
+python -m http.server 8000 --bind 127.0.0.1 --directory /tmp/arxiv-site
+```
+
+Open `http://localhost:8000/`; conference pagination requires HTTP(S).
+To publish manually or export through a specific date:
 
 ```bash
 python -m daily_arxiv.reporting.site --through-date 2026-10-08 --output /tmp/arxiv-site

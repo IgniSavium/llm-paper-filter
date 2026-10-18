@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daily ArXiv · {{DATE}}</title>
+{{MATH_STYLESHEET}}
 <style>{{MATH_CSS}}.tag-low{opacity:.55;font-weight:400}
 .direction-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.direction-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--border);border-radius:9px;padding:10px}.direction-name{min-width:90px;font-size:13px;font-weight:650}.direction-row select{font-size:13px;padding:5px 8px}@media(max-width:760px){.direction-filters{grid-template-columns:1fr}}
 </style>
@@ -17,7 +18,7 @@ try { document.documentElement.dataset.theme = localStorage.getItem('arxiv-reade
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif;transition:background .15s,color .15s}button,select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:7px 12px;cursor:pointer}button:hover,select:hover{border-color:var(--accent)}button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.shell{max-width:1240px;margin:auto;padding:44px 30px 64px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:750}.masthead h1{margin:6px 0;font-size:36px;letter-spacing:-.04em}.subtitle{margin:0;color:var(--muted);font-size:14px}.date{font-variant-numeric:tabular-nums}.theme-button{white-space:nowrap}.stats{display:flex;flex-wrap:wrap;gap:10px 24px;color:var(--muted);margin:24px 0 20px;font-size:14px}.stats strong{color:var(--text);font-size:20px;margin-right:5px}.controls{position:static;display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:13px;padding:14px 18px;margin-bottom:12px}.control{display:flex;align-items:center;gap:9px}.control label,.control-label{font-size:13px;color:var(--muted)}.segmented{display:flex;gap:3px}.segmented button{font-size:13px;padding:6px 10px;border-color:transparent}.segmented button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--border)}.paper-card{border:1px solid var(--border);border-radius:17px;background:var(--surface);padding:28px 30px;margin-bottom:22px;box-shadow:var(--shadow)}.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.tags{display:flex;flex-wrap:wrap;gap:7px;align-items:center}.tag{color:var(--accent);background:var(--soft);border:1px solid var(--border);padding:3px 10px;border-radius:30px;font-size:12px;font-weight:650}.status{font-size:12px;color:var(--muted);padding:3px 2px}.score{font-size:25px;font-weight:750;white-space:nowrap;line-height:1.4}.score small{font-size:11px;margin-left:5px;font-weight:500;color:var(--muted)}.score-5{color:var(--accent)}.paper-card h2{font:600 25px/1.35 Georgia,"Times New Roman",serif;letter-spacing:-.015em;margin:18px 0 8px;overflow-wrap:anywhere}.zh-title{font-size:18px;line-height:1.65;margin:0 0 8px}.authors{font-size:12px;color:var(--muted);margin:0 0 20px;overflow-wrap:anywhere}.reason{background:var(--reason);border-left:3px solid var(--accent);border-radius:0 9px 9px 0;padding:14px 18px;margin-bottom:20px}.reason h3{margin:0 0 8px;font-size:12px;letter-spacing:.02em}.reason h3 span{font-weight:500;color:var(--muted);margin-left:8px}.reason p{margin:7px 0;font-size:14px;overflow-wrap:anywhere}.reason p[lang=en]{font-family:Georgia,"Times New Roman",serif}.abstract{border-top:1px solid var(--border);padding-top:13px}.abstract summary{cursor:pointer;font-weight:650;font-size:14px}.abstract summary span{font-weight:400;color:var(--muted);margin-left:8px}.abstract-toolbar{display:flex;align-items:center;justify-content:flex-end;margin:16px 0;color:var(--muted);font-size:12px}.abstract-toolbar select{padding:5px 10px;font-size:12px}.abstract-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}.abstract-columns section{min-width:0}.abstract-columns h3{color:var(--accent);font-size:11px;letter-spacing:.08em;margin:0 0 8px}.abstract-columns p{margin:0;font-size:15px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere}.abstract-en p{font-family:Georgia,"Times New Roman",serif}.abstract[data-mode=en] .abstract-zh,.abstract[data-mode=zh] .abstract-en{display:none}.abstract[data-mode=en] .abstract-columns,.abstract[data-mode=zh] .abstract-columns{grid-template-columns:1fr}.paper-card footer{display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:20px;padding-top:12px;font-size:12px;color:var(--muted)}.empty{padding:48px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:15px}.page-footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}@media(max-width:760px){.shell{padding:24px 14px 36px}.masthead h1{font-size:28px}.paper-card{padding:20px 18px}.paper-card h2{font-size:22px}.abstract-columns{grid-template-columns:1fr;gap:22px}.controls{top:0;border-radius:10px;padding:12px;gap:10px}.control{flex-wrap:wrap}.card-top{gap:8px}.score{font-size:22px}.stats{gap:8px 18px}.reason{padding:12px 14px}}@media(prefers-reduced-motion:reduce){body{transition:none}}
 
 .abstract-columns{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
-.category-controls{width:100%;border-bottom:1px solid var(--border);padding-bottom:10px}.category-controls>summary{cursor:pointer;font-size:14px;font-weight:650}.category-controls>summary span{font-size:12px;color:var(--muted);font-weight:400;margin-left:10px}.filter-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-top:12px}.filter-row>span{font-size:12px;color:var(--muted);min-width:65px}.filter-chips{display:flex;flex-wrap:wrap;gap:6px}.filter-chip{position:relative;cursor:pointer}.filter-chip input{position:absolute;opacity:0;width:1px;height:1px}.filter-chip span{display:inline-block;border:1px solid var(--border);border-radius:30px;padding:4px 11px;font-size:12px;color:var(--muted)}.filter-chip input:checked+span{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:650}.exclude-chip input:checked+span{background:var(--reason);border-color:#b96957;color:var(--text)}.filter-chip input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}.basic-filters[disabled]{opacity:.45}.basic-filters{border:0;margin:0;padding:0;min-inline-size:0}#category-summary{overflow-wrap:anywhere}.advanced-row{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}.advanced-expression{flex:1;min-width:240px}.advanced-expression input{width:100%;box-sizing:border-box;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:13px ui-monospace,monospace}.expression-error{display:block;color:#bb6953;font-size:12px}.filter-expression{font-size:12px;color:var(--muted);margin:8px 0 0;overflow-wrap:anywhere}.sentence{border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}.sentence.matched{background:#d9eee0;color:var(--text)}[data-theme=dark] .sentence.matched{background:#315748}.sentence:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.math-source{white-space:normal}.math-source[data-display=true]{display:block;max-width:100%;overflow-x:auto}.katex{font-size:1.05em}.katex-display{margin:.6em 0;max-width:100%;overflow-x:auto;overflow-y:hidden}.katex-error{white-space:normal;overflow-wrap:anywhere}.reset-button,.expand-button{font-size:13px}.controls{gap:10px 22px}@media(max-width:760px){.abstract-columns{grid-template-columns:1fr}.controls{position:static}.filter-row{align-items:flex-start}.advanced-expression{min-width:100%}}
+.category-controls{width:100%;border-bottom:1px solid var(--border);padding-bottom:10px}.category-controls>summary{cursor:pointer;font-size:14px;font-weight:650}.category-controls>summary span{font-size:12px;color:var(--muted);font-weight:400;margin-left:10px}.filter-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-top:12px}.filter-row>span{font-size:12px;color:var(--muted);min-width:65px}.filter-chips{display:flex;flex-wrap:wrap;gap:6px}.filter-chip{position:relative;cursor:pointer}.filter-chip input{position:absolute;opacity:0;width:1px;height:1px}.filter-chip span{display:inline-block;border:1px solid var(--border);border-radius:30px;padding:4px 11px;font-size:12px;color:var(--muted)}.filter-chip input:checked+span{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:650}.exclude-chip input:checked+span{background:var(--reason);border-color:#b96957;color:var(--text)}.filter-chip input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}.basic-filters[disabled]{opacity:.45}.basic-filters{border:0;margin:0;padding:0;min-inline-size:0}#category-summary{overflow-wrap:anywhere}.advanced-row{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}.advanced-expression{flex:1;min-width:240px}.advanced-expression input{width:100%;box-sizing:border-box;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:13px ui-monospace,monospace}.expression-error{display:block;color:#bb6953;font-size:12px}.filter-expression{font-size:12px;color:var(--muted);margin:8px 0 0;overflow-wrap:anywhere}.sentence{border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}.sentence.matched{background:#d9eee0;color:var(--text)}[data-theme=dark] .sentence.matched{background:#315748}.sentence:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.math-source{white-space:normal}.math-source[data-display=true]{display:block;max-width:100%;overflow-x:auto}.katex{font-size:1.05em}.katex-display{margin:.6em 0;max-width:100%;overflow-x:auto;overflow-y:hidden}.katex-error{white-space:normal;overflow-wrap:anywhere}.reset-button,.expand-button,#backup-bookmarks,#restore-bookmarks{font-size:13px}.controls{gap:10px 22px}@media(max-width:760px){.abstract-columns{grid-template-columns:1fr}.controls{position:static}.filter-row{align-items:flex-start}.advanced-expression{min-width:100%}}
 .card-actions{display:flex;align-items:center;gap:14px;margin-left:auto}.card-top{flex-wrap:wrap}.bookmark-button{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;font-size:12px;white-space:nowrap}.bookmark-icon{font-size:18px;line-height:1}.bookmark-button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--accent)}.result-position{font:12px/1.6 ui-monospace,monospace;color:var(--muted);white-space:nowrap}.tags .result-position{padding:3px 8px;border:1px solid var(--border);border-radius:7px}.marked-control{font-size:13px;display:flex;align-items:center;gap:7px;color:var(--text)}.marked-control input{accent-color:var(--accent)}.bookmark-status{font-size:12px;color:var(--muted);width:100%}
 .bookmark-button{width:34px;height:34px;justify-content:center;padding:0}.bookmark-icon{font-size:21px}.paper-card{scroll-margin-top:16px}.bookmarked-outline{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px 20px;margin:0 0 22px}.outline-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.copy-fallback{width:100%;min-height:160px;margin:0 0 12px;padding:12px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;font:13px/1.6 ui-monospace,monospace}.outline-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.outline-actions button{font-size:12px;padding:5px 9px}.outline-heading{flex-wrap:wrap}.outline-heading h2{font-size:15px;margin:0}.outline-heading span,.bookmarked-outline>p{color:var(--muted);font-size:12px}.bookmarked-outline>p{margin:6px 0 12px}.bookmarked-outline ol{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}.bookmark-row{display:grid;grid-template-columns:24px 28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 4px;border-top:1px solid var(--border);border-bottom:2px solid transparent;min-height:44px}.bookmark-row a{font-size:13px;line-height:1.5;overflow-wrap:anywhere}.drag-handle{color:var(--muted);cursor:grab;font-size:12px;letter-spacing:-1px}.outline-index{font:12px ui-monospace,monospace;color:var(--muted)}.order-buttons{display:flex;gap:5px}.metadata-export{display:inline-flex;align-items:center;justify-content:center}.order-buttons button{padding:3px 8px;font-size:14px}.order-buttons button:disabled{opacity:.3;cursor:default}.bookmark-row.dragging{opacity:.45}.bookmark-row.drop-before{border-top:2px solid var(--accent)}.bookmark-row.drop-after{border-bottom:2px solid var(--accent)}@media(max-width:760px){.bookmarked-outline{padding:14px}.bookmark-row{gap:6px;grid-template-columns:24px 20px minmax(0,1fr) auto}.bookmark-row a{font-size:12px}}
 .tag-low{opacity:.55;font-weight:400}
@@ -39,166 +40,16 @@ try { document.documentElement.dataset.theme = localStorage.getItem('arxiv-reade
 <p class="filter-expression" id="filter-expression">{{DEFAULT_EXPRESSION}}</p>
 </details>
 <div class="control"><span class="control-label">所有摘要</span><div class="segmented" role="group" aria-label="所有论文的摘要语言"><button type="button" data-mode="both" aria-pressed="true">中英对照</button><button type="button" data-mode="en" aria-pressed="false">仅英文</button><button type="button" data-mode="zh" aria-pressed="false">仅中文</button></div></div>
-<label class="marked-control"><input type="checkbox" id="marked-only">仅看已标记 <span id="marked-count">0</span></label><span id="bookmark-status" class="bookmark-status" hidden role="status"></span>
+<label class="marked-control"><input type="checkbox" id="marked-only">仅看已收藏 <span id="marked-count">0</span></label><button id="backup-bookmarks" type="button">备份收藏</button><button id="restore-bookmarks" type="button">恢复收藏</button><input id="bookmark-file" type="file" accept="application/json,.json" hidden><span id="bookmark-status" class="bookmark-status" hidden role="status"></span>
 <button id="expand-all" class="expand-button" type="button" aria-expanded="false" aria-controls="papers">展开全部摘要</button><button id="reset-filters" class="reset-button" type="button">重置筛选</button>
 </nav>
-<section id="bookmarked-outline" class="bookmarked-outline" hidden aria-label="已标记论文的阅读顺序"><div class="outline-heading"><h2>已标记阅读目录</h2><div class="outline-actions"><span id="outline-count"></span><button id="export-bookmarks" type="button" title="按阅读目录顺序复制本日报全部已标记论文，包含被当前筛选隐藏的论文">导出目录</button></div></div><p>拖动条目，或用 ↑ ↓ 调整顺序；点击标题跳转。</p><p id="bookmark-copy-status" role="status" hidden></p><textarea id="bookmark-markdown" class="copy-fallback" aria-label="已标记论文的 Markdown 列表，可手动复制" readonly hidden></textarea><ol id="bookmark-list"></ol></section>
+<section id="bookmarked-outline" class="bookmarked-outline" hidden aria-label="已收藏论文的阅读顺序"><div class="outline-heading"><h2>已收藏阅读目录</h2><div class="outline-actions"><span id="outline-count"></span><button id="export-bookmarks" type="button" title="按阅读目录顺序复制本日报全部已收藏论文，包含被当前筛选隐藏的论文">导出目录</button></div></div><p>拖动条目，或用 ↑ ↓ 调整顺序；点击标题跳转。</p><p id="bookmark-copy-status" role="status" hidden></p><textarea id="bookmark-markdown" class="copy-fallback" aria-label="已收藏论文的 Markdown 列表，可手动复制" readonly hidden></textarea><ol id="bookmark-list"></ol></section>
+<p id="backup-status" role="status" hidden></p><nav id="pagination" class="controls" aria-label="论文分页" hidden><button id="previous-page" type="button">上一页</button><span id="page-position" aria-live="polite"></span><button id="next-page" type="button">下一页</button><label>每页 <select id="page-size"><option>25</option><option selected>50</option><option>100</option></select> 篇</label></nav><p id="load-status" role="status" hidden></p><button id="retry-page" type="button" hidden>重新加载本页</button><noscript>请启用 JavaScript 使用筛选、收藏和分页功能。</noscript>
 <div id="papers">{{CARDS}}</div>
 <p id="empty-state" class="empty" hidden>当前筛选条件下没有论文。请尝试其他类别或分数。</p>
 <footer class="page-footer">Daily ArXiv · {{DATE}}</footer>
 </main>
-<script>
-(() => {
- const cards=Array.from(document.querySelectorAll('.paper-card'));
- cards.forEach((card,index)=>{if(!card.id)card.id=`paper-${index+1}`;if(!card.dataset.title)card.dataset.title=card.querySelector('h2').textContent;card.querySelector('.bookmark-label')?.remove();});
- const abstracts=Array.from(document.querySelectorAll('.abstract'));
- const byId=id=>document.getElementById(id);
- const bookmarkStorageKey='arxiv-reader-bookmarks-v1';
- const bookmarkOrderStorageKey='arxiv-reader-bookmark-order-v1';
- let bookmarks=new Set(),bookmarkOrder=[],draggedKey=null;
- function ensureBookmarkOrder(){for(const card of cards)if(bookmarks.has(card.dataset.bookmarkKey)&&!bookmarkOrder.includes(card.dataset.bookmarkKey))bookmarkOrder.push(card.dataset.bookmarkKey);}
- function loadBookmarks(){try{const stored=JSON.parse(localStorage.getItem(bookmarkStorageKey)||'[]');bookmarks=new Set(Array.isArray(stored)?stored.filter(key=>typeof key==='string'):[]);const order=JSON.parse(localStorage.getItem(bookmarkOrderStorageKey)||'[]');bookmarkOrder=Array.from(new Set(Array.isArray(order)?order.filter(key=>typeof key==='string'):[]));}catch(_){byId('bookmark-status').textContent='标记和顺序暂存在本次页面中，浏览器不允许本地保存。';byId('bookmark-status').hidden=false;}ensureBookmarkOrder();}
- function saveBookmarks(){try{localStorage.setItem(bookmarkStorageKey,JSON.stringify(Array.from(bookmarks)));localStorage.setItem(bookmarkOrderStorageKey,JSON.stringify(bookmarkOrder));byId('bookmark-status').hidden=true;}catch(_){byId('bookmark-status').textContent='暂时无法保存标记或顺序；请勿关闭页面。';byId('bookmark-status').hidden=false;}}
- function updateBookmarkButtons(){let count=0;for(const card of cards){const marked=bookmarks.has(card.dataset.bookmarkKey);const button=card.querySelector('.bookmark-button');button.setAttribute('aria-pressed',String(marked));button.setAttribute('aria-label',marked?'取消标记这篇论文':'标记这篇论文');button.title=marked?'取消标记这篇论文':'标记这篇论文';button.querySelector('.bookmark-icon').textContent=marked?'★':'☆';count+=marked;}byId('marked-count').textContent=count;}
- loadBookmarks();updateBookmarkButtons();
- for(const card of cards)card.querySelector('.bookmark-button').addEventListener('click',()=>{ensureBookmarkOrder();const key=card.dataset.bookmarkKey;if(bookmarks.has(key))bookmarks.delete(key);else{bookmarks.add(key);if(!bookmarkOrder.includes(key))bookmarkOrder.push(key);}saveBookmarks();updateBookmarkButtons();filter();});
- byId('marked-only').addEventListener('change',filter);
- window.addEventListener('storage',event=>{if([bookmarkStorageKey,bookmarkOrderStorageKey,null].includes(event.key)){loadBookmarks();updateBookmarkButtons();filter();}});
- function placeCards(order){const container=byId('papers');let next=container.firstElementChild;for(const card of order){if(card===next)next=next.nextElementSibling;else container.insertBefore(card,next);}}
- function moveBookmark(key,target,after=false){if(key===target)return;ensureBookmarkOrder();if(!bookmarks.has(key)||!bookmarks.has(target))return;bookmarkOrder=bookmarkOrder.filter(value=>value!==key);const index=bookmarkOrder.indexOf(target);bookmarkOrder.splice(index+(after?1:0),0,key);saveBookmarks();filter();}
- function renderOutline(shown){draggedKey=null;const visible=byId('marked-only').checked&&shown.length>0;byId('bookmarked-outline').hidden=!visible;byId('outline-count').textContent=`${shown.length} 篇`;const list=byId('bookmark-list');list.replaceChildren();if(!visible)return;shown.forEach((card,index)=>{const row=document.createElement('li');row.className='bookmark-row';row.dataset.key=card.dataset.bookmarkKey;row.draggable=true;const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⋮⋮';handle.setAttribute('aria-hidden','true');const position=document.createElement('span');position.className='outline-index';position.textContent=index+1;const link=document.createElement('a');link.href='#'+card.id;link.draggable=false;link.replaceChildren(...Array.from(card.querySelector('h2').childNodes,node=>node.cloneNode(true)));link.setAttribute('aria-label',card.dataset.title);const actions=document.createElement('div');actions.className='order-buttons';const exportButton=document.createElement('button');exportButton.type='button';exportButton.className='metadata-export';exportButton.title='导出论文 metadata（复制 Markdown）';exportButton.setAttribute('aria-label','复制这篇论文的 Markdown metadata');exportButton.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>';exportButton.addEventListener('click',()=>copyMarkdown(paperMetadataMarkdown(card),`已复制《${card.dataset.title}》的 metadata。`,exportButton));actions.append(exportButton);for(const [direction,text,disabled] of [['up','↑',index===0],['down','↓',index===shown.length-1]]){const button=document.createElement('button');button.type='button';button.textContent=text;button.disabled=disabled;button.dataset.direction=direction;button.setAttribute('aria-label',direction==='up'?'上移这篇论文':'下移这篇论文');button.title=direction==='up'?'上移':'下移';button.addEventListener('click',()=>{const target=shown[index+(direction==='up'?-1:1)];moveBookmark(card.dataset.bookmarkKey,target.dataset.bookmarkKey,direction==='down');const replacement=Array.from(byId('bookmark-list').children).find(item=>item.dataset.key===card.dataset.bookmarkKey);const focus=replacement?.querySelector(`button[data-direction="${direction}"]:not(:disabled)`)||replacement?.querySelector('a');focus?.focus({preventScroll:true});});actions.append(button);}row.append(handle,position,link,actions);list.append(row);});}
- function bookmarkedMarkdown(selected){
-  const clean=value=>String(value||'').replace(/\s+/g,' ').trim();
-  const escapeMarkdown=value=>Array.from(clean(value),char=>'`*_{}[]<>'.includes(char)||char.charCodeAt(0)===92?String.fromCharCode(92)+char:char).join('');
-  return selected.map(card=>{
-   const title=escapeMarkdown(card.dataset.title);
-   const authors=escapeMarkdown(card.querySelector('.authors').textContent);
-   const url=card.querySelector('footer a').href;
-   return `- [${title}](<${url}>)${authors?' — '+authors:''}`;
-  }).join('\n\n')+'\n';
- }
- byId('export-bookmarks').addEventListener('click',async()=>{
-  ensureBookmarkOrder();
-  const ranks=new Map(bookmarkOrder.map((key,index)=>[key,index]));
-  const selected=cards.filter(card=>bookmarks.has(card.dataset.bookmarkKey));
-  selected.sort((a,b)=>(ranks.get(a.dataset.bookmarkKey)??Infinity)-(ranks.get(b.dataset.bookmarkKey)??Infinity)||cards.indexOf(a)-cards.indexOf(b));
-  if(!selected.length)return;
-  await copyMarkdown(bookmarkedMarkdown(selected),`已复制 ${selected.length} 篇论文的 Markdown。`,byId('export-bookmarks'));
- });
- function paperMetadataMarkdown(card){
-  const data=JSON.parse(card.dataset.paperMetadata);
-  const clean=value=>String(value??'None').replace(/\s+/g,' ').trim()||'None';
-  const escapeText=value=>Array.from(clean(value),char=>'`*_{}[]<>'.includes(char)||char.charCodeAt(0)===92?String.fromCharCode(92)+char:char).join('');
-  const title=clean(data.title);
-  const slug=Array.from(title).filter(char=>!'/：:*?"<>|'.includes(char)&&char.charCodeAt(0)!==92).join('').replace(/\s+/g,'_');
-  const dateParts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
-  const part=type=>dateParts.find(value=>value.type===type).value;
-  const blogDate=`${part('year')}/${part('month')}/${part('day')}`;
-  const timestamp=value=>value?clean(value).replace('T',' ').replace(/Z$/,'+00:00'):'未记录';
-  const comment=String(data.comment??'None').split(/\r?\n/).map(escapeText).join('\n  ');
-  return [
-   '# '+escapeText(title),'',slug,'','---','','## 🔥INFO','',
-   `**Blog**: ${blogDate} by IgniSavium`,'',
-   '- **Title**: '+escapeText(title),
-   '- **Authors**: '+escapeText((data.authors||[]).join(', ')),
-   '- **Published**: '+timestamp(data.published),
-   '- **Updated**: '+timestamp(data.updated),
-   '- **Categories**: '+escapeText((data.categories||[]).join(', ')),
-   '- **Comment**: '+comment,
-   '- **Journal Reference**: '+escapeText(data.journal_ref),
-   '- **URL**: '+clean(data.url),'','🥜**TLDR**:','','---',''
-  ].join('\n');
- }
- async function copyMarkdown(text,message,button){
-  const status=byId('bookmark-copy-status');
-  const fallback=byId('bookmark-markdown');
-  button.disabled=true;status.hidden=false;fallback.hidden=true;
-  try{
-   await navigator.clipboard.writeText(text);
-   status.textContent=message;
-  }catch(_){
-   fallback.value=text;fallback.hidden=false;fallback.focus();fallback.select();
-   status.textContent='无法自动访问剪贴板，文本已选中，请按 Ctrl+C（Mac：⌘C）复制。';
-  }finally{button.disabled=false;}
- }
- function clearDrag(){for(const row of byId('bookmark-list').children)row.classList.remove('dragging','drop-before','drop-after');}
- byId('bookmark-list').addEventListener('dragstart',event=>{const row=event.target.closest('.bookmark-row');if(!row)return;draggedKey=row.dataset.key;event.dataTransfer.setData('text/plain',draggedKey);event.dataTransfer.effectAllowed='move';row.classList.add('dragging');});
- byId('bookmark-list').addEventListener('dragover',event=>{const row=event.target.closest('.bookmark-row');if(!row||!draggedKey||row.dataset.key===draggedKey)return;event.preventDefault();event.dataTransfer.dropEffect='move';for(const item of byId('bookmark-list').children)item.classList.remove('drop-before','drop-after');const after=event.clientY>row.getBoundingClientRect().y+row.getBoundingClientRect().height/2;row.classList.add(after?'drop-after':'drop-before');});
- byId('bookmark-list').addEventListener('drop',event=>{const row=event.target.closest('.bookmark-row');if(!row||!draggedKey)return;event.preventDefault();const key=draggedKey;const after=event.clientY>row.getBoundingClientRect().y+row.getBoundingClientRect().height/2;draggedKey=null;clearDrag();moveBookmark(key,row.dataset.key,after);});
- byId('bookmark-list').addEventListener('dragend',()=>{draggedKey=null;clearDrag();});
- const theme=byId('theme-toggle');
- function updateTheme(){const dark=document.documentElement.dataset.theme==='dark';theme.textContent=dark?'☀ 浅色模式':'☾ 深色模式';theme.setAttribute('aria-pressed',String(dark));}
- updateTheme();theme.addEventListener('click',()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('arxiv-reader-theme',document.documentElement.dataset.theme);}catch(_){}updateTheme();});
- byId('category-controls').open=innerWidth>760;
- const canonical=new Map(Array.from(document.querySelectorAll('[data-direction-mode]')).map(input=>[input.dataset.directionMode.toLowerCase(),input.dataset.directionMode]));
- function compileExpression(source){
-  if(!source.trim())return ()=>true;
-  if(/[^A-Za-z0-9()\s=!<>]/.test(source))throw new Error('请使用方向名称、分数比较、AND / OR / NOT 和括号。');
-  const tokens=source.match(/[A-Za-z]+|>=|<=|!=|[=<>]|[0-9]+|[()]/g)||[];let position=0;
-  const peek=()=>tokens[position]?.toUpperCase();
-  function primary(){
-   const token=tokens[position++];
-   if(token==='('){const node=or();if(tokens[position++]!==')')throw new Error('括号未配对。');return node;}
-   const category=canonical.get((token||'').toLowerCase());if(!category)throw new Error('请填写有效方向名称。');
-   const operator=tokens[position];
-   if(['=','>=','<=','>','<','!='].includes(operator)){
-    position++;const literal=tokens[position++];const target=Number(literal);
-    if(!/^[1-5]$/.test(literal||''))throw new Error('方向分数必须是 1–5 的整数。');
-    return scores=>{const value=scores[category];switch(operator){case '=':return value===target;case '>=':return value>=target;case '<=':return value<=target;case '>':return value>target;case '<':return value<target;case '!=':return value!==target;}};
-   }
-   return (scores,threshold=4)=>scores[category]>=threshold;
-  }
-  function not(){if(peek()==='NOT'){position++;const node=not();return (scores,threshold)=>!node(scores,threshold);}return primary();}
-  function and(){let node=not();while(peek()==='AND'){position++;const left=node,right=not();node=(scores,threshold)=>left(scores,threshold)&&right(scores,threshold);}return node;}
-  function or(){let node=and();while(peek()==='OR'){position++;const left=node,right=and();node=(scores,threshold)=>left(scores,threshold)||right(scores,threshold);}return node;}
-  const node=or();if(position!==tokens.length)throw new Error('类别之间需要 AND 或 OR。');return node;
- }
- function directionExpression(){
-  const include=[],exclude=[];
-  for(const input of document.querySelectorAll('[data-direction-mode]')){
-   if(input.value==='ignore')continue;
-   const category=input.dataset.directionMode;
-   const scores=byId(`${category}-score`).value.split(',');
-   const term=scores.length===1?`${category}=${scores[0]}`:`(${scores.map(score=>`${category}=${score}`).join(' OR ')})`;
-   (input.value==='exclude'?exclude:include).push(term);
-  }
-  let expression=include.join(byId('category-logic').value==='and'?' AND ':' OR ');
-  if(exclude.length){if(expression)expression=`(${expression}) AND `;expression+=`NOT (${exclude.join(' OR ')})`;}
-  return expression;
- }
- function filter(){
-  const advanced=byId('advanced-filter').checked;
-  const expression=advanced?byId('category-expression').value.trim():directionExpression();
-  if(!advanced)byId('category-expression').value=expression;
-  let predicate,description=expression||'全部候选论文',error='';
-  try{predicate=compileExpression(expression);}catch(e){error=e.message;predicate=()=>false;}
-  byId('expression-error').textContent=error;byId('expression-error').hidden=!error;byId('filter-expression').textContent=description;byId('category-summary').textContent=description;
-  let visible=0,five=0,four=0,fresh=0;const shown=[];const markedOnly=byId('marked-only').checked;
-  for(const card of cards){const values=JSON.parse(card.dataset.categoryScores||'null');
-   const eligible=values||!expression;
-   const show=eligible&&predicate(values||{})&&(!markedOnly||bookmarks.has(card.dataset.bookmarkKey));card.hidden=!show;if(show){shown.push(card);visible++;five+=card.dataset.score==='5';four+=card.dataset.score==='4';fresh+=card.dataset.new==='true';}}
-  if(markedOnly){ensureBookmarkOrder();const ranks=new Map(bookmarkOrder.map((key,index)=>[key,index]));shown.sort((a,b)=>(ranks.get(a.dataset.bookmarkKey)??Infinity)-(ranks.get(b.dataset.bookmarkKey)??Infinity)||cards.indexOf(a)-cards.indexOf(b));const visibleCards=new Set(shown);placeCards([...shown,...cards.filter(card=>!visibleCards.has(card))]);}else placeCards(cards);
-  renderOutline(shown);
-  shown.forEach((card,index)=>{for(const position of card.querySelectorAll('.result-position'))position.textContent=`${index+1}/${visible}`;});
-  byId('visible-count').textContent=visible;byId('five-count').textContent=five;byId('four-count').textContent=four;byId('new-count').textContent=fresh;byId('update-count').textContent=visible-fresh;byId('empty-state').hidden=visible!==0;
- }
- for(const input of document.querySelectorAll('[data-direction-mode],[data-direction-score]'))input.addEventListener('change',filter);
- byId('category-logic').addEventListener('change',filter);byId('category-expression').addEventListener('input',filter);
- byId('advanced-filter').addEventListener('change',()=>{const advanced=byId('advanced-filter').checked;byId('basic-filters').disabled=advanced;byId('expression-panel').hidden=!advanced;filter();});
- byId('reset-filters').addEventListener('click',()=>{
-  for(const input of document.querySelectorAll('[data-direction-mode]'))input.value=['MechInterp','CompGen'].includes(input.dataset.directionMode)?'include':'ignore';
-  for(const input of document.querySelectorAll('[data-direction-score]'))input.value='5';
-  byId('category-logic').value='or';byId('marked-only').checked=false;byId('advanced-filter').checked=false;byId('basic-filters').disabled=false;byId('expression-panel').hidden=true;byId('category-expression').value={{DEFAULT_EXPRESSION_JSON}};filter();
- });filter();
- function clearMatches(abstract){for(const sentence of abstract.querySelectorAll('.matched'))sentence.classList.remove('matched');}
- function highlight(abstract,event){const sentence=event.target.closest('.sentence');if(!sentence||abstract.dataset.mode!=='both')return;clearMatches(abstract);for(const match of abstract.querySelectorAll(`.sentence[data-pair="${sentence.dataset.pair}"]`))match.classList.add('matched');}
- for(const abstract of abstracts){abstract.addEventListener('pointerover',event=>highlight(abstract,event));abstract.addEventListener('pointerout',event=>{const next=event.relatedTarget?.closest?.('.sentence');const prior=event.target.closest('.sentence');if(next&&prior&&next.dataset.pair===prior.dataset.pair&&next.closest('.abstract')===abstract)return;clearMatches(abstract);});abstract.addEventListener('focusin',event=>highlight(abstract,event));abstract.addEventListener('focusout',()=>clearMatches(abstract));}
- for(const button of document.querySelectorAll('.segmented button'))button.addEventListener('click',()=>{for(const abstract of abstracts){abstract.dataset.mode=button.dataset.mode;abstract.querySelector('.paper-mode').value=button.dataset.mode;clearMatches(abstract);}for(const other of document.querySelectorAll('.segmented button'))other.setAttribute('aria-pressed',String(other===button));});
- for(const select of document.querySelectorAll('.paper-mode'))select.addEventListener('change',()=>{const abstract=select.closest('.abstract');abstract.dataset.mode=select.value;clearMatches(abstract);for(const button of document.querySelectorAll('.segmented button'))button.setAttribute('aria-pressed','false');});
- function updateExpanded(){const allOpen=abstracts.length>0&&abstracts.every(abstract=>abstract.open);byId('expand-all').textContent=allOpen?'收起全部摘要':'展开全部摘要';byId('expand-all').setAttribute('aria-expanded',String(allOpen));byId('expand-all').disabled=!abstracts.length;}
- byId('expand-all').addEventListener('click',()=>{const expand=abstracts.some(abstract=>!abstract.open);for(const abstract of abstracts)abstract.open=expand;updateExpanded();});for(const abstract of abstracts)abstract.addEventListener('toggle',updateExpanded);updateExpanded();
- for(const element of document.querySelectorAll('.math-source')){try{katex.render(element.dataset.tex,element,{displayMode:element.dataset.display==='true',throwOnError:false,strict:'ignore',trust:false});}catch(_){} }
-})();
-</script>
+<script type="application/json" id="reader-data">{{READER_DATA}}</script>
+<script>{{READER_JS}}</script>
 </body>
 </html>

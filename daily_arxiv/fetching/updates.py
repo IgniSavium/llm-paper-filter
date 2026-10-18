@@ -31,6 +31,11 @@ def snapshot_paths(directory):
     return sorted(Path(directory).glob('papers_*.json')) + sorted((Path(directory) / 'updates').glob('*/papers_*.json'))
 
 
+def metadata_key(paper):
+    """A version can receive bibliographic/administrative updates in place."""
+    return version_key(paper), paper_info_digest([paper])
+
+
 def announcement_target_date(collection_date=None):
     collection_date = collection_date or datetime.now(ZoneInfo('Asia/Shanghai')).date().isoformat()
     return (datetime.strptime(collection_date, '%Y-%m-%d').date() - timedelta(days=1)).isoformat()
@@ -235,7 +240,7 @@ def discover_updates(directory, max_results=5000, lookback_days=7, now=None, *,
         known = set()
         for path in snapshot_paths(directory):
             rows, _ = load_paper_input(path)
-            known.update(version_key(p) for p in rows)
+            known.update(metadata_key(p) for p in rows)
         print(f'Latest public metadata versions: {start} through {end}', flush=True)
         harvest = fetch_metadata_updates(start, until=end, categories=categories)
         groups = {}
@@ -243,7 +248,7 @@ def discover_updates(directory, max_results=5000, lookback_days=7, now=None, *,
             day = paper['oai_datestamp']
             if not start <= day <= end:
                 raise RuntimeError('Provider record is outside requested metadata dates; cursor not advanced')
-            if version_key(paper) not in known:
+            if metadata_key(paper) not in known:
                 groups.setdefault(day, []).append(paper)
         for day, rows in sorted(groups.items()):
             for offset in range(0, len(rows), max_results):
@@ -274,37 +279,25 @@ def discover_updates(directory, max_results=5000, lookback_days=7, now=None, *,
     return today, start
 
 
-def completed_versions(model_dir, threshold):
-    """Only finished evaluations with translations and an HTML report count as done."""
+def completed_versions(model_dir, threshold=None, *, with_metadata=False):
+    """Completed content stays complete after model, prompt or threshold changes."""
+    from daily_arxiv.reporting.artifacts import load_completed_report
     done = set()
     for path in Path(model_dir).rglob('all_papers_*.json'):
-        if 'archives' in path.parts:
+        if any(part in path.parts for part in ('archives', '.history')) or any(part.startswith('.report-stage-') for part in path.parts):
             continue
-        payload = json.loads(path.read_text())
-        meta = payload.get('metadata', {})
-        if meta.get('filter_prompt_sha256') != PROMPT_SHA256 or meta.get('threshold_used') != threshold or meta.get('scoring_mode') != 'per_direction':
+        try:
+            date = path.stem.removeprefix('all_papers_')
+            reports = load_completed_report(path.parent.parent, date)
+            done.update((metadata_key(p) if with_metadata else version_key(p))
+                        for p in reports['all_papers']['all_papers_evaluated'])
+        except (OSError, ValueError, KeyError, TypeError):
             continue
-        date = meta['target_date']
-        output = path.parent.parent
-        translated = output / 'hits_zh' / f'hits_zh_{date}.json'
-        html = output / 'html_reports' / f'report_{date}.html'
-        if not translated.exists() or not html.exists():
-            continue
-        zh = json.loads(translated.read_text())
-        rows = payload['all_papers_evaluated']
-        if meta.get('paper_info_sha256') != paper_info_digest(rows):
-            continue
-        if zh.get('metadata', {}).get('paper_info_sha256') != meta['paper_info_sha256']:
-            continue
-        required = {version_key(p) for p in rows if evaluation_score(p['eval']) >= threshold}
-        available = {version_key(p) for p in zh['hits_zh'] if p.get('zh_title') and p.get('zh_abstract') and p.get('eval', {}).get('zh_reason')}
-        if required <= available:
-            done.update(version_key(p) for p in rows)
     return done
 
 
 def pending_batches(directory, model_dir, threshold, start, *, announcement_through=None):
-    done = completed_versions(model_dir, threshold)
+    done = completed_versions(model_dir, threshold, with_metadata=True)
     for path in snapshot_paths(directory):
         rows, date = load_paper_input(path)
         # Old explicit-date snapshots are backfilled only within the discovery window.
@@ -317,9 +310,9 @@ def pending_batches(directory, model_dir, threshold, start, *, announcement_thro
         if metadata.get('discovery_method') == 'rss_announcements':
             # A version reviewed in an OAI catch-up still needs its official
             # daily view. Only that batch's own complete report satisfies it.
-            local_done = completed_versions(Path(model_dir) / 'updates' / path.parent.name, threshold)
-            if rows and any(version_key(p) not in local_done for p in rows):
+            local_done = completed_versions(Path(model_dir) / 'updates' / path.parent.name, threshold, with_metadata=True)
+            if rows and any(metadata_key(p) not in local_done for p in rows):
                 yield path, date
             continue
-        if rows and any(version_key(p) not in done for p in rows):
+        if rows and any(metadata_key(p) not in done for p in rows):
             yield path, date

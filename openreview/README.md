@@ -202,9 +202,12 @@ space-padded formulas, symbols touching digits and adjacent inline formulas.
 Validation preserves formula order and rejects substantial verbatim English prose.
 These checks do not prove semantic equivalence; ambiguous formula referents and
 short untranslated phrases still require review. All translated rows are validated
-before report replacement. Queue completion now depends on the translation
-contract hash, valid translated artifacts and the HTML file, so outdated or
-corrupt results are revisited while valid inference caches remain reusable.
+before report replacement. New reports commit a checksum manifest only after all
+JSON and HTML artifacts are ready. Interrupted commits or corrupted artifacts
+fail completion checks. A completed corpus is preserved when model defaults,
+prompts or reasoning effort change; translation-rule version changes alone do
+not schedule historical inference. Use the explicit repair command for repairs.
+Zero-hit corpora are complete without an HTML reader.
 
 ## Direction statistics
 
@@ -246,6 +249,15 @@ are exported; conference controls, badges and ordering use those two directions.
 The default reader filter remains `MechInterp=5 OR CompGen=5`. Statistics retain
 their original score-5 definition. Accepted and submitted corpora are labeled
 separately, and source inference/translation artifacts are not modified.
+
+Web readers keep a compact corpus-wide filter index and fetch card chunks for
+50 papers per page. Filters and the bookmark view apply to the entire conference,
+not just the visible page. Formula rendering waits until an abstract is opened;
+KaTeX and reader assets are shared across conference reports. Local inference
+outputs remain single-file offline readers. Both formats offer **备份收藏** and
+**恢复收藏**: download all saved bookmarks/order as JSON, then merge them back after
+clearing browser data or moving to another browser. The existing Markdown export
+is for reading lists; it is not a restorable backup.
 
 From the repository root:
 

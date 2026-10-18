@@ -9,6 +9,8 @@ import math
 from pathlib import Path
 import re
 from urllib.parse import urlparse
+import os
+import shutil
 
 from daily_arxiv.filtering.prompts import CATEGORIES, PROMPT_SHA256, category_labels, evaluation_score, DEFAULT_FILTER_EXPRESSION
 from daily_arxiv.math_text import MATH_PATTERN, normalize_math_source
@@ -20,6 +22,12 @@ def bookmark_key(paper):
     parsed = urlparse(url)
     if parsed.hostname in ("arxiv.org", "www.arxiv.org", "export.arxiv.org") and parsed.path.startswith("/abs/"):
         return "arxiv:" + re.sub(r"v\d+$", "", parsed.path.removeprefix("/abs/"))
+    if parsed.hostname in ('openreview.net', 'www.openreview.net'):
+        from urllib.parse import parse_qs
+        identifier = parse_qs(parsed.query).get('id', [None])[0]
+        if identifier:
+            # Retain the existing canonical URL key to preserve old bookmarks.
+            return 'url:openreview.net/forum?id=' + identifier
     if parsed.scheme in ("http", "https"):
         return "url:" + parsed.netloc.lower() + parsed.path + ("?" + parsed.query if parsed.query else "")
     return "paper:" + hashlib.sha256((paper.get("title", "") + "\n" + paper.get("abstract", "")).encode()).hexdigest()
@@ -140,7 +148,8 @@ def math_assets():
     return css, js
 
 
-def generate_mobile_html_report(translated_hits, target_date_str, save_dir, metadata=None):
+def generate_mobile_html_report(translated_hits, target_date_str, save_dir, metadata=None, *,
+                                page_size=None, asset_dir=None):
     conference_report = (metadata or {}).get('source') == 'openreview'
     categories = ('MechInterp', 'CompGen') if conference_report else CATEGORIES
     threshold = 4 if conference_report else (metadata or {}).get('threshold_used', 4)
@@ -152,7 +161,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
                     key=lambda p: report_score(p['eval']), reverse=True)
     export_cache_path = Path(save_dir) / '.paper_metadata.json'
     export_cache = json.loads(export_cache_path.read_text()) if export_cache_path.exists() else {}
-    cards = []
+    cards, index_rows = [], []
     for index, paper in enumerate(papers, 1):
         evaluation = paper["eval"]
         labels = ([c for c in categories if evaluation.get('scores', {}).get(c, 0) >= threshold]
@@ -166,7 +175,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
             badges = "".join(f'<span class="tag{" tag-low" if scores[c] < threshold else ""}" data-tag="{c}">{c} {scores[c]}/5</span>' for c in categories)
         else:
             badges += '<span class="status">历史总分；方向未评分</span>'
-        score_caption = "/5 最高方向分" if scores else "/5 历史总分"
+        score_caption = "/5" if scores else "/5 历史总分"
         status = paper.get("status", "Update")
         url = paper.get("url", "")
         reading_source = 'OpenReview' if urlparse(url).hostname == 'openreview.net' else 'arXiv'
@@ -181,8 +190,13 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
             'journal_ref': paper.get('journal_ref', extra.get('journal_ref', '未记录')),
         }
         en, zh, en_ids, zh_ids = align_sentences(paper.get("abstract", ""), paper.get("zh_abstract") or "暂无中文摘要")
-        cards.append(f'''<article id="paper-{index}" class="paper-card" data-paper-metadata="{escape(json.dumps(export_metadata, ensure_ascii=False), quote=True)}" data-title="{escape(paper.get('title', ''), quote=True)}" data-bookmark-key="{escape(bookmark_key(paper), quote=True)}" data-categories="{escape(json.dumps(labels), quote=True)}" data-score="{score}" data-category-scores="{escape(json.dumps(scores), quote=True)}" data-new="{str(status == 'v1 (New)').lower()}">
-  <div class="card-top"><div class="tags"><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span>{badges}<span class="status">{escape(status)}</span></div><div class="card-actions"><button class="bookmark-button" type="button" aria-pressed="false" aria-label="标记这篇论文" title="标记这篇论文"><span class="bookmark-icon" aria-hidden="true">☆</span></button><span class="score score-{score}">{score}<small>{score_caption}</small></span></div></div>
+        key = bookmark_key(paper)
+        anchor = 'paper-' + hashlib.sha256(key.encode()).hexdigest()[:16]
+        index_rows.append(dict(id=anchor, key=key, title=paper.get('title', ''),
+                               authors=paper.get('authors', []), url=url,
+                               scores=scores, score=score, new=status == 'v1 (New)'))
+        cards.append(f'''<article id="{anchor}" class="paper-card" data-paper-metadata="{escape(json.dumps(export_metadata, ensure_ascii=False), quote=True)}" data-title="{escape(paper.get('title', ''), quote=True)}" data-bookmark-key="{escape(key, quote=True)}" data-categories="{escape(json.dumps(labels), quote=True)}" data-score="{score}" data-category-scores="{escape(json.dumps(scores), quote=True)}" data-new="{str(status == 'v1 (New)').lower()}">
+  <div class="card-top"><div class="tags"><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span>{badges}<span class="status">{escape(status)}</span></div><div class="card-actions"><button class="bookmark-button" type="button" aria-pressed="false" aria-label="收藏这篇论文" title="收藏这篇论文"><span class="bookmark-icon" aria-hidden="true">☆</span></button><span class="score score-{score}">{score}<small>{score_caption}</small></span></div></div>
   <h2>{math_markup(paper.get('title', ''))}</h2>
   <p class="zh-title" lang="zh-CN">{math_markup(paper.get('zh_title', ''))}</p>
   <p class="authors">{escape(', '.join(paper.get('authors', [])))}</p>
@@ -256,11 +270,51 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         else:
             note += f" · {metadata['conference']} {metadata['conference_year']} 主会已录用论文（OpenReview 公开元数据）；当年列表可能继续更新"
     content = content.replace("{{CLASSIFICATION_NOTE}}", escape(note))
-    css, js = math_assets()
-    content = content.replace("{{MATH_CSS}}", css).replace("{{MATH_JS}}", js)
-    content = content.replace("{{TOTAL}}", str(len(papers))).replace("{{CARDS}}", "\n".join(cards))
     directory = Path(save_dir) / "html_reports"
     directory.mkdir(parents=True, exist_ok=True)
+    css, js = math_assets()
+    reader_js = TEMPLATE_PATH.with_name('reader.js').read_text(encoding='utf-8')
+    reader_data = None
+    if page_size is not None:
+        if type(page_size) is not int or page_size < 1:
+            raise ValueError('page_size must be a positive integer')
+        content_digest = hashlib.sha256(f'page_size={page_size}\n'.encode())
+        for card in cards:
+            content_digest.update(card.encode())
+        identity = content_digest.hexdigest()[:16]
+        data_name = f'data_{target_date_str}_{identity}'
+        data_dir = directory / data_name
+        data_dir.mkdir(exist_ok=True)
+        for offset in range(0, len(cards), page_size):
+            name = f'{offset // page_size}.json'
+            (data_dir / name).write_text(json.dumps(cards[offset:offset + page_size], ensure_ascii=False), encoding='utf-8')
+            for position in range(offset, min(offset + page_size, len(cards))):
+                index_rows[position]['chunk'] = f'{data_name}/{name}'
+                index_rows[position]['slot'] = position - offset
+        reader_data = {'pageSize': page_size, 'papers': index_rows}
+        cards = []
+        assets = Path(asset_dir) if asset_dir else directory / 'assets'
+        assets.mkdir(parents=True, exist_ok=True)
+        def asset(name, value):
+            stem, suffix = name.rsplit('.', 1)
+            filename = f'{stem}.{hashlib.sha256(value.encode()).hexdigest()[:16]}.{suffix}'
+            path = assets / filename
+            if not path.exists():
+                path.write_text(value, encoding='utf-8')
+            return escape(Path(os.path.relpath(path, directory)).as_posix(), quote=True)
+        content = content.replace('{{MATH_STYLESHEET}}', f'<link rel="stylesheet" href="{asset("katex.css", css)}">')
+        content = content.replace('<script>{{MATH_JS}}</script>', f'<script src="{asset("katex.js", js)}"></script>')
+        content = content.replace('<script>{{READER_JS}}</script>', f'<script src="{asset("reader.js", reader_js)}"></script>')
+        css = ''
+    content = content.replace('{{MATH_STYLESHEET}}', '')
+    content = content.replace("{{MATH_CSS}}", css).replace("{{MATH_JS}}", js)
+    content = content.replace('{{READER_JS}}', reader_js.replace('</script', r'<\/script'))
+    content = content.replace('{{READER_DATA}}', json.dumps(reader_data, ensure_ascii=False).replace('<', r'\u003c'))
+    content = content.replace("{{TOTAL}}", str(len(papers))).replace("{{CARDS}}", "\n".join(cards))
     path = directory / f"report_{target_date_str}.html"
     path.write_text(content, encoding="utf-8")
+    if page_size is not None:
+        for stale in directory.glob(f'data_{target_date_str}_*'):
+            if stale.is_dir() and stale.name != data_name:
+                shutil.rmtree(stale)
     return str(path)

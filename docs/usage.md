@@ -75,9 +75,15 @@ python daily_arxiv/daily_arxiv_filter_codex.py \
 ```
 
 Caches are identified by paper content, model, reasoning effort, prompt, and
-schema. Changing the rubric triggers new scoring. Rerun an interrupted command
-to reuse validated completed work. `--dry_run` on the shared runner prints the
-plan without fetching or inference. GPT model selection is explicit; the code
+schema. Completed dates are preserved even after changing the model, rubric,
+reasoning effort, or threshold; these changes apply to unfinished/new work.
+Unchanged title/abstract content also reuses saved decisions and translations
+when bibliographic metadata changes. A changed title/abstract is new model work.
+Late additions to an existing date retain that date's original admission threshold.
+To deliberately run a new comparison, use a separate `--runs_dir` outside the
+existing run root (or an independent `--save_dir` for a backend entry point).
+Rerun an interrupted command to reuse validated completed work. `--dry_run` on the
+shared runner prints the plan without fetching or inference. GPT model selection is explicit; the code
 does not silently switch to another model or API billing.
 
 ## HTML filters and reading
@@ -97,14 +103,29 @@ A bare direction means a score of at least 4. Reset restores the default filter.
 The loaded HTML pool contains only admitted candidates; all scored inputs are
 stored separately, including lower scores.
 
-Bookmarks and their reading order are saved locally in the browser. Abstracts
-can show English, Chinese, or both; sentence highlighting is approximate when
-translations split or merge sentences. Formula assets are embedded, so the
-reader works offline.
+Bookmarks and their reading order are saved locally in the browser. **备份收藏**
+downloads a versioned JSON file covering all reports' saved bookmarks and their
+order, including records outside the current report/filter/page. Keep this file
+on disk. After clearing browser data, click **恢复收藏** and choose the file;
+restoration merges with existing bookmarks, deduplicates records and preserves
+reading order. Existing bookmarks keep their current order; new records are
+appended in backup order. Invalid files leave existing data intact. Existing
+browser bookmark keys are migrated automatically when opening an updated reader.
+The Markdown **导出目录** remains a separate reading-list export, not a restorable
+backup. **仅看已收藏** shows all bookmarks in the current report, ignoring direction
+filters, including 4-point papers hidden by the normal default filter.
+
+Conference readers exported for Pages filter the whole corpus before pagination,
+then fetch just the required page chunks. **展开本页摘要** affects the current page;
+abstract formulas render when opened. Shared resources are cached across reports.
+The web export needs HTTP(S); use the original single-file HTML for offline reading.
+Abstracts can show English, Chinese, or both; sentence highlighting is approximate
+when translations split or merge sentences. Single-file reports embed formula
+assets for offline reading.
 
 ## Generated files
 
-All generated data is excluded from Git:
+Generated inputs, model outputs and caches stay outside the source branch:
 
 ```text
 daily_arxiv/paper_info/
@@ -118,6 +139,7 @@ daily_arxiv/runs/
 │   ├── scheduler.log             # Rotating lifecycle log
 │   └── job_*.log                 # Fetching and inference logs per attempt
 └── gpt-6-luna_runs/
+    ├── .reports/                  # Completion manifests and per-date locks
     ├── all_papers/                # Every evaluated paper
     ├── hits/                      # Admitted candidates
     ├── hits_zh/                   # Translated candidates
@@ -125,6 +147,12 @@ daily_arxiv/runs/
     ├── .codex_cache/              # Reusable inference results
     └── updates/                   # Incremental model batch artifacts
 ```
+
+Reports are rendered and validated in a staging directory before replacement.
+The completion manifest is committed last and includes every artifact's checksum;
+an interrupted commit cannot pass publication checks. Zero-hit/empty dates are
+completed results without an HTML file. Legacy reports are checked against their
+JSON data and rebuilt during website export without invoking a model.
 
 If the same paper changes on several queried dates, only its latest available
 version is retained. A paper subsequently updated outside a historical query

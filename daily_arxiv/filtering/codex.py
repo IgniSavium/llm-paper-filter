@@ -21,7 +21,7 @@ from daily_arxiv.filtering.pipeline import (
     MATH_PATTERN, TRANSLATION_PROMPT, DATA_BOUNDARY, TranslationContentError,
     result_schema, validate_results, write_json, validate_translation_math,
     split_translation_text, assemble_translation, decode_translation_parts,
-    process_batches, save_reports, load_filter_input, paper_prompt, run_filter,
+    process_batches, save_reports, load_filter_input, paper_prompt, run_filter, reuse_completed_input, needs_inference,
 )
 
 
@@ -171,13 +171,20 @@ def main(argv=None):
             parser.error("--date must be YYYY-MM-DD")
     papers, date, source_metadata = load_filter_input(args)
     input_digest = paper_info_digest(papers)
+    if reuse_completed_input(args.save_dir, date, papers):
+        return
     cache_dir = args.cache_dir or Path(args.save_dir) / ".codex_cache"
     if papers:
-        client = CodexClient(args.codex_bin, args.reasoning_effort, args.timeout, args.max_retries,
-                             model=args.model)
-        client.check_login()
+        from daily_arxiv.reporting.artifacts import prior_paper_results, completed_date_threshold
+        args.threshold = completed_date_threshold(args.save_dir, date, args.threshold)
+        prior = prior_paper_results(args.save_dir, papers)
+        client = None
+        if needs_inference(papers, prior, args.threshold):
+            client = CodexClient(args.codex_bin, args.reasoning_effort, args.timeout, args.max_retries,
+                                 model=args.model)
+            client.check_login()
         papers, translated = run_filter(papers, client, cache_dir, args.threshold,
-                                        args.batch_size, args.translation_batch_size, args.workers)
+                                        args.batch_size, args.translation_batch_size, args.workers, prior=prior)
     else:
         translated = []
     save_reports(papers, translated, date, args.threshold, args.save_dir,

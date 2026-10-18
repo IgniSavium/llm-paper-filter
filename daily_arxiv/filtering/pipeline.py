@@ -3,8 +3,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import shutil
 import sys
 import tempfile
 
@@ -84,7 +86,7 @@ def validate_results(payload, expected_ids, translation=False):
     return indexed
 
 
-def write_json(path, payload):
+def write_json(path, payload, *, durable=False):
     """Atomic writes keep resumable results intact if a job is interrupted."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -92,7 +94,16 @@ def write_json(path, payload):
                                      delete=False, suffix=".tmp") as handle:
         temporary = Path(handle.name)
         json.dump(payload, handle, ensure_ascii=False, indent=4)
+        if durable:
+            handle.flush()
+            os.fsync(handle.fileno())
     temporary.replace(path)
+    if durable:
+        descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
 
 
 def validate_translation_math(source, translated):
@@ -330,6 +341,10 @@ def process_batches(papers, client, cache_dir, batch_size=3, translation=False, 
 
 
 def save_reports(papers, translated, target_date, threshold, save_dir, input_digest=None, source_metadata=None):
+    """Render a full generation before committing its files and completion marker."""
+    from daily_arxiv.reporting.artifacts import (
+        report_paths, manifest_path, file_digest, report_lock, validate_payloads,
+    )
     # Validate the entire translated set before replacing any report files.
     for paper in translated:
         validate_translated_paper(paper)
@@ -340,6 +355,7 @@ def save_reports(papers, translated, target_date, threshold, save_dir, input_dig
     hits = sorted([paper for paper in papers if evaluation_score(paper["eval"]) >= threshold],
                   key=lambda paper: evaluation_score(paper["eval"]), reverse=True)
     translated = sorted(translated, key=lambda paper: evaluation_score(paper["eval"]), reverse=True)
+    reports = {}
     for folder, key, rows in (("hits", "hits", hits), ("hits_zh", "hits_zh", translated),
                               ("all_papers", "all_papers_evaluated", papers)):
         new_count = sum(paper.get("status") == "v1 (New)" for paper in rows)
@@ -350,28 +366,81 @@ def save_reports(papers, translated, target_date, threshold, save_dir, input_dig
                                 "filter_prompt_sha256": PROMPT_SHA256,
                                 "filter_categories": list(CATEGORIES), "scoring_mode": scoring_mode,
                                 "translation_contract_sha256": translation_contract_sha256()}, key: rows}
-        if input_digest is not None:
-            payload["metadata"]["paper_info_sha256"] = input_digest
+        payload["metadata"]["paper_info_sha256"] = input_digest or paper_info_digest(papers)
         payload["metadata"].update(source_metadata or {})
         if (source_metadata or {}).get('source') == 'openreview':
             payload['metadata'].pop('new_papers', None)
             payload['metadata'].pop('version_updates', None)
             count_key = 'submitted_papers' if (source_metadata or {}).get('paper_status') == 'submitted' else 'accepted_papers'
             payload['metadata'][count_key] = len(rows)
-        path = Path(save_dir) / folder / f"{folder}_{target_date}.json"
-        write_json(path, payload)
-        print(f"Saved: {path}")
-    if translated:
-        html_path = generate_mobile_html_report(translated, target_date, str(save_dir), metadata=payload["metadata"])
-        print(f"Mobile HTML report saved to: {html_path}")
-    else:
-        (Path(save_dir) / 'html_reports' / f'report_{target_date}.html').unlink(missing_ok=True)
-        print(f"No report HTML for {target_date}: no matching papers.")
+        reports[folder] = payload
+    validate_payloads(reports, target_date)
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    with report_lock(save_dir, target_date, exclusive=True):
+        with tempfile.TemporaryDirectory(prefix='.report-stage-', dir=save_dir) as temporary:
+            stage = Path(temporary)
+            paths = report_paths(target_date)
+            for folder, relative in paths.items():
+                write_json(stage / relative, reports[folder], durable=True)
+            html_relative = f'html_reports/report_{target_date}.html'
+            if translated:
+                extra = save_dir / '.paper_metadata.json'
+                if extra.exists():
+                    shutil.copyfile(extra, stage / extra.name)
+                generate_mobile_html_report(translated, target_date, str(stage),
+                                            metadata=reports['all_papers']['metadata'])
+                with (stage / html_relative).open('rb') as handle:
+                    os.fsync(handle.fileno())
+                paths['html'] = html_relative
+            manifest = {'schema_version': 1, 'target_date': target_date,
+                        'has_html': bool(translated),
+                        'files': {relative: file_digest(stage / relative) for relative in paths.values()}}
+            marker = manifest_path(save_dir, target_date)
+            # A crash during replacement leaves an invalid marker, never a
+            # publishable mixture. Legacy generations get the same protection.
+            write_json(marker, {'schema_version': 1, 'target_date': target_date, 'state': 'committing'}, durable=True)
+            for relative in paths.values():
+                destination = save_dir / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                (stage / relative).replace(destination)
+            if not translated:
+                (save_dir / html_relative).unlink(missing_ok=True)
+            directories = {save_dir}
+            directories.update((save_dir / relative).parent for relative in paths.values())
+            for directory in directories:
+                descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
+            write_json(marker, manifest, durable=True)
+    print(f"Saved complete report: {save_dir}, {target_date}, {len(translated)} translated hits", flush=True)
+
+
+def reuse_completed_input(save_dir, date, papers):
+    """Preserve completed dates across model/config changes, without inference."""
+    from daily_arxiv.reporting.artifacts import find_completed_report
+    found = find_completed_report(save_dir, date, paper_info_digest(papers))
+    if found is None:
+        return False
+    source, reports = found
+    if source.resolve() != Path(save_dir).resolve():
+        metadata = dict(reports['all_papers']['metadata'])
+        for key in ('total_papers_fetched', 'total_hits', 'accepted_papers', 'submitted_papers',
+                    'new_papers', 'version_updates'):
+            metadata.pop(key, None)
+        metadata['paper_info_sha256'] = paper_info_digest(papers)
+        save_reports(reports['all_papers']['all_papers_evaluated'], reports['hits_zh']['hits_zh'],
+                     date, metadata['threshold_used'], save_dir,
+                     input_digest=metadata['paper_info_sha256'], source_metadata=metadata)
+    print(f'Preserving completed date {date} from {source}; no model work.', flush=True)
+    return True
 
 
 
 SOURCE_METADATA_KEYS = (
-    'source', 'batch_id', 'batch_kind', 'announcement_date', 'date_basis',
+    'source', 'batch_id', 'batch_kind', 'discovered_at', 'announcement_date', 'date_basis',
     'discovery_method', 'collected_on', 'report_timezone', 'submission_date_range',
     'arxiv_categories', 'metadata_datestamp_range', 'official_announcement_date_verified',
     'note', 'query_start_utc', 'query_end_utc',
@@ -434,9 +503,32 @@ def paper_prompt(instruction, records, translation=False, fragments_only=False):
 
 
 def run_filter(papers, client, cache_dir, threshold=4, batch_size=3,
-               translation_batch_size=10, workers=1):
-    evaluated = process_batches(papers, client, cache_dir, batch_size, workers=workers)
+               translation_batch_size=10, workers=1, prior=None):
+    from daily_arxiv.reporting.artifacts import content_key
+    prior = prior or {}
+    pending = [p for p in papers if content_key(p) not in prior]
+    newly_evaluated = process_batches(pending, client, cache_dir, batch_size, workers=workers) if pending else []
+    new_by_key = {content_key(p): p for p in newly_evaluated}
+    evaluated = copy.deepcopy(papers)
+    for paper in evaluated:
+        old = prior.get(content_key(paper), new_by_key.get(content_key(paper)))
+        paper['eval'] = copy.deepcopy(old['eval'])
+        paper['eval'].pop('zh_reason', None)
     hits = [paper for paper in evaluated if evaluation_score(paper['eval']) >= threshold]
-    translated = process_batches(hits, client, cache_dir, translation_batch_size,
-                                 translation=True, workers=workers)
+    pending_zh = [p for p in hits if not prior.get(content_key(p), {}).get('zh_abstract')]
+    fresh_zh = (process_batches(pending_zh, client, cache_dir, translation_batch_size,
+                                translation=True, workers=workers) if pending_zh else [])
+    zh_by_key = {content_key(p): p for p in fresh_zh}
+    translated = copy.deepcopy(hits)
+    for paper in translated:
+        old = zh_by_key.get(content_key(paper), prior.get(content_key(paper)))
+        paper.update(zh_title=old['zh_title'], zh_abstract=old['zh_abstract'])
+        paper['eval']['zh_reason'] = old['eval']['zh_reason']
     return evaluated, translated
+
+
+def needs_inference(papers, prior, threshold):
+    from daily_arxiv.reporting.artifacts import content_key
+    return any(content_key(p) not in prior or
+               (evaluation_score(prior[content_key(p)]['eval']) >= threshold
+                and not prior[content_key(p)].get('zh_abstract')) for p in papers)

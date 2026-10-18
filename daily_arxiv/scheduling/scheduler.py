@@ -68,20 +68,15 @@ def save_state(path, state):
 
 
 def initial_state(args, now):
-    from daily_arxiv.filtering.prompts import PROMPT_SHA256
+    from daily_arxiv.reporting.artifacts import load_completed_report
     completed = []
     model_dir = BASE / 'runs' / 'gpt-6-luna_runs'
     for report in (model_dir / 'hits_zh').glob('hits_zh_*.json'):
         day = report.stem.removeprefix('hits_zh_')
         try:
             datetime.strptime(day, '%Y-%m-%d')
-            payloads = [json.loads((model_dir / folder / f'{folder}_{day}.json').read_text())
-                        for folder in ('all_papers', 'hits', 'hits_zh')]
-            if payloads[-1].get('hits_zh') and not (model_dir / 'html_reports' / f'report_{day}.html').exists():
-                continue
-            if all(p['metadata'].get('filter_prompt_sha256') == PROMPT_SHA256
-                   and p['metadata'].get('scoring_mode') == 'per_direction'
-                   and p['metadata'].get('target_date') == day for p in payloads) and day <= target_date(now, args.timezone, getattr(args, 'day_lag', 2)):
+            load_completed_report(model_dir, day)
+            if day <= target_date(now, args.timezone, getattr(args, 'day_lag', 2)):
                 completed.append(day)
         except (OSError, ValueError, KeyError, TypeError):
             continue

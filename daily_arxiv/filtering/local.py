@@ -10,7 +10,7 @@ from daily_arxiv.filtering.prompts import SYSTEM_PROMPT, evaluation_score
 from daily_arxiv.filtering.pipeline import (
     TRANSLATION_PROMPT, DATA_BOUNDARY, TranslationContentError,
     result_schema, validate_results, decode_translation_parts, paper_prompt,
-    process_batches, load_filter_input, run_filter, save_reports,
+    process_batches, load_filter_input, run_filter, save_reports, reuse_completed_input, needs_inference,
 )
 from daily_arxiv.reporting.html import generate_mobile_html_report
 from daily_arxiv.fetching.snapshots import DEFAULT_PAPER_INFO_DIR, paper_info_digest, resolve_date
@@ -171,11 +171,16 @@ def main(argv=None, default_model_path='./weights/Llama-3.3-70B-Instruct', defau
     args.save_dir = args.save_dir or RUNS_DIR / f'{model_name}_runs'
     papers, date, metadata = load_filter_input(args)
     digest = paper_info_digest(papers)
+    if reuse_completed_input(args.save_dir, date, papers):
+        return
     if papers:
-        client = create_client(args)
+        from daily_arxiv.reporting.artifacts import prior_paper_results, completed_date_threshold
+        args.threshold = completed_date_threshold(args.save_dir, date, args.threshold)
+        prior = prior_paper_results(args.save_dir, papers)
+        client = create_client(args) if needs_inference(papers, prior, args.threshold) else None
         papers, translated = run_filter(papers, client, args.cache_dir or args.save_dir / '.local_cache',
                                         args.threshold, args.batch_size, args.translation_batch_size,
-                                        workers=1)  # Serialize access to the local GPU engine.
+                                        workers=1, prior=prior)  # Serialize access to the local GPU engine.
     else:
         translated = []
     save_reports(papers, translated, date, args.threshold, args.save_dir,

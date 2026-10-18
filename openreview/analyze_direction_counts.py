@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from daily_arxiv.fetching.snapshots import paper_info_digest
-from daily_arxiv.filtering.prompts import PROMPT_SHA256, validate_evaluation
+from daily_arxiv.filtering.prompts import validate_evaluation
 
 METRICS = {'mech': 'MechInterp = 5', 'comp': 'CompGen = 5',
            'either': 'MechInterp = 5 OR CompGen = 5', 'both': 'MechInterp = 5 AND CompGen = 5'}
@@ -32,8 +32,6 @@ def collect(runs_dir):
             raise ValueError(f'Empty or duplicate paper corpus: {path}')
         if m['paper_info_sha256'] != paper_info_digest(papers):
             raise ValueError(f'Input checksum mismatch: {path}')
-        if m['filter_prompt_sha256'] != PROMPT_SHA256:
-            raise ValueError(f'Scoring prompt differs from current prompt: {path}')
         if m['total_papers_fetched'] != len(papers):
             raise ValueError(f'Paper count mismatch: {path}')
         counts = {k: 0 for k in METRICS}

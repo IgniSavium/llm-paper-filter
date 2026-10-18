@@ -11,7 +11,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from daily_arxiv.cli.common import run
 from daily_arxiv.fetching.snapshots import load_paper_input, paper_info_digest
-from daily_arxiv.filtering.pipeline import write_json, translation_contract_sha256, validate_translated_paper
+from daily_arxiv.filtering.pipeline import write_json, translation_contract_sha256, validate_translated_paper, reuse_completed_input
 from daily_arxiv.filtering.prompts import PROMPT_SHA256
 from openreview.fetching import BASE_DIR, CONFERENCES, PAPER_STATUSES, corpus_name, is_accepted_paper, is_submitted_paper, venue_id
 from openreview.run_openreview import build_command
@@ -59,10 +59,10 @@ def stamp():
 def reports_complete(output, date, identity, check_marker=True):
     """A completion marker is valid only while its translated artifacts validate."""
     try:
+        from daily_arxiv.reporting.artifacts import load_completed_report
+        reports = load_completed_report(output, date)
         if check_marker and json.loads((output / '.queue_complete.json').read_text()) != identity:
             return False
-        reports = {folder: json.loads((output / folder / f'{folder}_{date}.json').read_text())
-                   for folder in ('all_papers', 'hits', 'hits_zh')}
         for report in reports.values():
             if any(report['metadata'].get(key) != identity[key] for key in
                    ('paper_info_sha256', 'filter_prompt_sha256', 'translation_contract_sha256')):
@@ -131,6 +131,10 @@ def main(argv=None):
             identity.update(paper_info_sha256=job['paper_info_sha256'], filter_prompt_sha256=PROMPT_SHA256)
             identity['translation_contract_sha256'] = translation_contract_sha256()
             marker = output / '.queue_complete.json'
+            papers, _ = load_paper_input(job['source'], job['date'])
+            if reuse_completed_input(output, job['date'], papers):
+                state['completed'].append(name)
+                continue
             if reports_complete(output, job['date'], identity):
                 print(f'Already complete: {name}', flush=True)
                 state['completed'].append(name)
