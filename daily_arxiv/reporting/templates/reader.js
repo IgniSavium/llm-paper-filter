@@ -196,6 +196,8 @@
    const marked=bookmarks.has(card.dataset.bookmarkKey), button=card.querySelector('.bookmark-button');
    button.setAttribute('aria-pressed',String(marked)); button.setAttribute('aria-label',marked?'取消收藏这篇论文':'收藏这篇论文');
    button.title=marked?'取消收藏这篇论文':'收藏这篇论文'; button.querySelector('.bookmark-icon').textContent=marked?'★':'☆';
+   const returnButton=card.querySelector('.outline-return');
+   if (returnButton) returnButton.hidden=!marked || !byId('marked-only').checked || byId('bookmarked-outline').hidden;
   }
  }
  function refreshBookmarks() {
@@ -262,6 +264,17 @@
   }
  }
  container.addEventListener('click',event=>{
+  const returnButton=event.target.closest('.outline-return');
+  if (returnButton) {
+   const outline=byId('bookmarked-outline');
+   if (outline.hidden) return;
+   const key=returnButton.closest('.paper-card').dataset.bookmarkKey;
+   const row=Array.from(byId('bookmark-list').children).find(item=>item.dataset.key===key);
+   outline.scrollIntoView({block:'start'});
+   row?.scrollIntoView({block:'nearest'});
+   row?.querySelector('.bookmark-title')?.focus({preventScroll:true});
+   return;
+  }
   const button=event.target.closest('.bookmark-button'); if (!button) return;
   const key=button.closest('.paper-card').dataset.bookmarkKey;
   if (bookmarks.has(key)) bookmarks.delete(key); else bookmarks.set(key,bookmarkRecord(itemByKey.get(key)));
@@ -301,15 +314,28 @@
    const row=document.createElement('li');row.className='bookmark-row';row.dataset.key=item.key;row.draggable=true;
    const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⋮⋮';
    const position=document.createElement('span');position.className='outline-index';position.textContent=index+1;
-   const link=document.createElement('a');link.href='#'+item.id;link.textContent=item.title;link.draggable=false;
+   const link=document.createElement('a');link.className='bookmark-title';link.href='#'+item.id;link.textContent=item.title;link.draggable=false;
    link.addEventListener('click',async event=>{event.preventDefault();if(paged){currentPage=Math.floor(index/pageSize)+1;await filter(false);}document.getElementById(item.id)?.scrollIntoView({block:'start'});});
    const actions=document.createElement('div');actions.className='order-buttons';
+   const sourceLink=document.createElement('a');sourceLink.className='paper-source-link';sourceLink.draggable=false;
+   sourceLink.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M21 3 10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/></svg>';
+   let sourceLabel='暂无论文原文链接';
+   if (/^https?:\/\//i.test(item.url)) {
+    sourceLink.href=item.url;sourceLink.target='_blank';sourceLink.rel='noopener noreferrer';
+    const host=new URL(item.url).hostname;
+    sourceLabel=['arxiv.org','www.arxiv.org','export.arxiv.org'].includes(host)?'在 arXiv 查看摘要':(host==='openreview.net'?'在 OpenReview 查看论文':'打开论文原文');
+   } else { sourceLink.setAttribute('aria-disabled','true');sourceLink.tabIndex=-1; }
+   sourceLink.title=sourceLabel;sourceLink.setAttribute('aria-label',sourceLabel);actions.append(sourceLink);
    const exportButton=document.createElement('button');exportButton.type='button';exportButton.textContent='↗';exportButton.title='复制这篇论文的 Markdown metadata';
+   exportButton.setAttribute('aria-label',exportButton.title);
    exportButton.addEventListener('click',async()=>{try{const card=await cardFor(item);await copyMarkdown(paperMetadataMarkdown(card),'已复制论文 metadata。',exportButton);}catch(error){message(`加载失败：${error.message}`);}});actions.append(exportButton);
    for(const [direction,text,disabled] of [['up','↑',index===0],['down','↓',index===shown.length-1]]){
     const button=document.createElement('button');button.type='button';button.textContent=text;button.disabled=disabled;button.dataset.direction=direction;button.setAttribute('aria-label',direction==='up'?'上移这篇论文':'下移这篇论文');
     button.addEventListener('click',async()=>{await moveBookmark(item.key,shown[index+(direction==='up'?-1:1)].key,direction==='down');const replacement=Array.from(byId('bookmark-list').children).find(row=>row.dataset.key===item.key);const focus=replacement?.querySelector(`button[data-direction="${direction}"]:not(:disabled)`)||replacement?.querySelector('a');focus?.focus({preventScroll:true});});actions.append(button);
    }
+   const removeButton=document.createElement('button');removeButton.type='button';removeButton.className='remove-bookmark';removeButton.title='取消收藏这篇论文';removeButton.setAttribute('aria-label',removeButton.title);
+   removeButton.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+   removeButton.addEventListener('click',async()=>{bookmarks.delete(item.key);saveBookmarks();await refreshBookmarks();const rows=byId('bookmark-list').children;const focus=rows[Math.min(index,rows.length-1)]?.querySelector('.bookmark-title')||byId('marked-only');focus.focus({preventScroll:true});});actions.append(removeButton);
    row.append(handle,position,link,actions);list.append(row);
   });
  }

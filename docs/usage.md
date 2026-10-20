@@ -114,6 +114,10 @@ browser bookmark keys are migrated automatically when opening an updated reader.
 The Markdown **导出目录** remains a separate reading-list export, not a restorable
 backup. **仅看已收藏** shows all bookmarks in the current report, ignoring direction
 filters, including 4-point papers hidden by the normal default filter.
+Each outline entry groups five actions: open the original paper, copy metadata,
+move up, move down, and remove the bookmark. The original-paper link opens the
+arXiv abstract or the conference paper's OpenReview page in a new tab. In the
+bookmark view, the icon beside each card's star returns to its outline entry.
 
 Conference readers exported for Pages filter the whole corpus before pagination,
 then fetch just the required page chunks. **展开本页摘要** affects the current page;

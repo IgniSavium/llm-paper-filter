@@ -40,6 +40,8 @@ class ReaderBrowserTests(unittest.TestCase):
         generate_mobile_html_report(papers, '2027-01-01', cls.root / 'conference', metadata,
                                     page_size=50, asset_dir=cls.root / 'assets')
         generate_mobile_html_report(papers[:3], '2027-01-01', cls.root / 'offline', metadata)
+        daily_paper = dict(papers[0], url='https://arxiv.org/abs/2610.00001v2')
+        generate_mobile_html_report([daily_paper], '2027-01-01', cls.root / 'daily')
         cls.server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(QuietHandler, directory=cls.root))
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
@@ -114,7 +116,7 @@ class ReaderBrowserTests(unittest.TestCase):
         self.page.check('#marked-only')
         self.wait_cards(3)
         self.page.locator('.bookmark-row button[aria-label="下移这篇论文"]').first.click()
-        expected = self.page.locator('.bookmark-row a').all_text_contents()
+        expected = self.page.locator('.bookmark-row .bookmark-title').all_text_contents()
         backup = self.backup()
         payload = json.loads(backup)
         self.assertEqual(len(payload['bookmarks']), 3)
@@ -124,7 +126,7 @@ class ReaderBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#marked-count').inner_text(), '0')
         self.restore(backup)
         self.page.check('#marked-only'); self.wait_cards(3)
-        self.assertEqual(self.page.locator('.bookmark-row a').all_text_contents(), expected)
+        self.assertEqual(self.page.locator('.bookmark-row .bookmark-title').all_text_contents(), expected)
         self.page.reload(); self.wait_cards(50)
         self.assertEqual(self.page.locator('#marked-count').inner_text(), '3')
         self.page.locator('.bookmark-button').nth(2).click()
@@ -218,6 +220,66 @@ class ReaderBrowserTests(unittest.TestCase):
             self.assertEqual(card.get_attribute('data-position-probe'), 'kept')
             self.assertTrue(card.locator('.abstract').evaluate('abstract => abstract.open'))
             self.assertIn('第 2 /', self.page.locator('#page-position').inner_text())
+        self.assertEqual(self.errors, [])
+
+    def test_favorite_actions_source_return_and_removing_last_favorite(self):
+        self.open('daily')
+        self.assertTrue(self.page.locator('.outline-return').is_hidden())
+        self.page.locator('.bookmark-button').click()
+        self.page.check('#marked-only'); self.wait_cards(1)
+        row = self.page.locator('.bookmark-row')
+        controls = row.locator('.order-buttons > *')
+        self.assertEqual(controls.evaluate_all("nodes=>nodes.map(node=>node.getAttribute('aria-label'))"),
+                         ['在 arXiv 查看摘要', '复制这篇论文的 Markdown metadata',
+                          '上移这篇论文', '下移这篇论文', '取消收藏这篇论文'])
+        source = row.locator('.paper-source-link')
+        self.assertEqual(source.get_attribute('href'), 'https://arxiv.org/abs/2610.00001v2')
+        self.assertEqual(source.get_attribute('target'), '_blank')
+        self.assertIn('noopener', source.get_attribute('rel'))
+        for width in (390, 320):
+            self.page.set_viewport_size(dict(width=width, height=844))
+            boxes = controls.evaluate_all('nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return {x:box.x,y:box.y,right:box.right}})')
+            self.assertTrue(all(abs(box['y']-boxes[0]['y']) < 1 for box in boxes))
+            self.assertEqual([box['x'] for box in boxes], sorted(box['x'] for box in boxes))
+            self.assertGreaterEqual(boxes[0]['x'], 0)
+            self.assertLessEqual(boxes[-1]['right'], width)
+            self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth > innerWidth'))
+        row.locator('.bookmark-title').click()
+        self.page.locator('.outline-return').click()
+        self.assertTrue(row.locator('.bookmark-title').evaluate('link=>document.activeElement===link'))
+        self.assertAlmostEqual(self.page.locator('#bookmarked-outline').bounding_box()['y'], 16, delta=2)
+        row.locator('.remove-bookmark').click(); self.wait_cards(0)
+        self.assertTrue(self.page.locator('#bookmarked-outline').is_hidden())
+        self.assertEqual(self.page.locator('#marked-count').inner_text(), '0')
+        self.page.uncheck('#marked-only'); self.wait_cards(1)
+        self.assertEqual(self.page.locator('.bookmark-button').get_attribute('aria-pressed'), 'false')
+        self.page.reload(); self.wait_cards(1)
+        self.assertEqual(self.page.locator('#marked-count').inner_text(), '0')
+        self.assertEqual(self.errors, [])
+
+    def test_return_to_outline_across_pages_and_remove_last_item_on_page(self):
+        self.open()
+        records = [dict(key=f'url:openreview.net/forum?id=id{i}', title=f'Paper {i:03d}', authors=['Author'],
+                        url=f'https://openreview.net/forum?id=id{i}') for i in range(51)]
+        self.restore(json.dumps(dict(format='llm-paper-filter-bookmarks', version=1,
+                                     bookmarks=records, order=[r['key'] for r in records])).encode())
+        self.page.check('#marked-only'); self.wait_cards(50)
+        row = self.page.locator('.bookmark-row').last
+        self.assertEqual(row.locator('.paper-source-link').get_attribute('href'), 'https://openreview.net/forum?id=id50')
+        self.assertEqual(row.locator('.paper-source-link').get_attribute('aria-label'), '在 OpenReview 查看论文')
+        row.locator('.bookmark-title').click()
+        self.page.wait_for_selector('.paper-card[data-title="Paper 050"]')
+        self.wait_cards(1)
+        self.assertIn('第 2 / 2 页', self.page.locator('#page-position').inner_text())
+        self.page.locator('.outline-return').click()
+        row = self.page.locator('.bookmark-row').last
+        self.assertTrue(row.locator('.bookmark-title').evaluate('link=>document.activeElement===link'))
+        self.assertTrue(row.is_visible())
+        row.locator('.remove-bookmark').click(); self.wait_cards(50)
+        self.assertEqual(self.page.locator('.bookmark-row').count(), 50)
+        self.assertEqual(self.page.locator('#marked-count').inner_text(), '50')
+        self.assertIn('第 1 / 1 页', self.page.locator('#page-position').inner_text())
+        self.assertEqual(self.page.locator('.paper-card[data-title="Paper 050"]').count(), 0)
         self.assertEqual(self.errors, [])
 
 
