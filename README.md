@@ -18,7 +18,8 @@ The website groups reports by month and shows each direction's
 ## Quick start
 
 Requires Linux, Python 3.11+, Node.js, and a ChatGPT-authenticated Codex CLI.
-The default backend is `gpt-6-luna`; no GPU is needed.
+The default backend is `gpt-6-luna`; no GPU is needed. GPT scoring and
+translation use one concurrent request by default for stable unattended runs.
 
 ```bash
 python3 -m venv .venv
@@ -26,7 +27,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 npm install -g @openai/codex
 codex login  # Use --device-auth on a headless machine
-python daily_arxiv/run_daily_arxiv.py --date 2026-10-08 --workers 4
+python daily_arxiv/run_daily_arxiv.py --date 2026-10-08 --workers 1
 ```
 
 Open `daily_arxiv/runs/gpt-6-luna_runs/html_reports/report_YYYY-MM-DD.html`.
@@ -49,8 +50,8 @@ Use `--paper_status submitted` to screen public active submissions before decisi
 
 ```bash
 python openreview/fetch_openreview_papers.py
-python openreview/run_openreview.py --workers 4
-python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --workers 4
+python openreview/run_openreview.py --workers 1
+python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --workers 1
 ```
 
 Conference data is updated manually, independently of the daily arXiv scheduler.
@@ -69,7 +70,7 @@ See [OpenReview usage](openreview/README.md) for years, snapshots and access err
 ```bash
 python daily_arxiv/scheduler.py start \
   --at 01:00 --timezone Asia/Shanghai --day_lag 2 --lookback_days 7 \
-  --workers 4 --publish-site
+  --workers 1 --publish-site
 python daily_arxiv/scheduler.py status
 ```
 

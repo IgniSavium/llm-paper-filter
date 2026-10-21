@@ -7,6 +7,11 @@ inference caches and bilingual HTML reader. No extra dependency is needed.
 Also supports **public active submissions** with `--paper_status submitted`.
 The default remains `--paper_status accepted`.
 
+GPT screening, snapshot queues and translation repair default to `--workers 1`
+for stable unattended runs. `--workers 2` is an optional manual setting after
+confirming stable access; return to one worker if rate-limit errors recur. Batch
+sizes and existing inference caches are unchanged.
+
 ## Screen submissions before acceptance
 
 ```bash
@@ -14,13 +19,13 @@ The default remains `--paper_status accepted`.
 python openreview/fetch_openreview_papers.py --paper_status submitted --conferences ICLR --years 2027
 
 # Fetch and score/translate with the existing pipeline.
-python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --workers 4
+python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --workers 1
 
 # Refresh the public list; unchanged inputs reuse inference caches.
-python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --refresh --workers 4
+python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --refresh --workers 1
 
 # Process saved submission snapshots with queue retry/resume.
-python openreview/process_snapshots.py --paper_status submitted --workers 4
+python openreview/process_snapshots.py --paper_status submitted --workers 1
 
 # Preview commands without loading credentials, fetching or inference.
 python openreview/run_openreview.py --paper_status submitted --conferences ICLR --years 2027 --dry_run
@@ -96,7 +101,7 @@ To process only existing snapshots in newest-first conference order, with automa
 retry and cache-based resume:
 
 ```bash
-python openreview/process_snapshots.py --workers 4
+python openreview/process_snapshots.py --workers 1
 python openreview/process_snapshots.py --dry_run
 ```
 
@@ -110,16 +115,16 @@ on restart when their inputs, scoring prompt and relevant model options match.
 ```bash
 # Run from the repository root. Default: all three venues, 2023–2026 in 2026.
 python openreview/fetch_openreview_papers.py
-python openreview/run_openreview.py --workers 4
+python openreview/run_openreview.py --workers 1
 
 # Choose venues/years; older years are allowed if hosted by OpenReview.
-python openreview/run_openreview.py --conferences ICML ICLR --years 2024 2025 2026 --workers 4
+python openreview/run_openreview.py --conferences ICML ICLR --years 2024 2025 2026 --workers 1
 
 # Small inference run (still fetches the complete accepted-paper corpus).
 python openreview/run_openreview.py --conferences ICLR --years 2026 --limit 10
 
 # Refresh provider metadata; unchanged inference inputs reuse caches.
-python openreview/run_openreview.py --years 2026 --refresh --workers 4
+python openreview/run_openreview.py --years 2026 --refresh --workers 1
 
 # Inspect commands without network or inference.
 python openreview/run_openreview.py --dry_run
@@ -186,7 +191,7 @@ python openreview/repair_translations.py --dry_run
 Repair invalid translations, reuse evaluations, and rebuild bilingual HTML:
 
 ```bash
-python openreview/repair_translations.py --workers 4 --repair_dir openreview/runs/.translation-repairs/my-repair
+python openreview/repair_translations.py --workers 1 --repair_dir openreview/runs/.translation-repairs/my-repair
 # Resume the same repair after an interruption using the same --repair_dir.
 ```
 

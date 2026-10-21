@@ -248,7 +248,7 @@ def main(argv=None):
     parser.add_argument('--day_lag', type=int, default=2, help='Metadata date lag in local calendar days (2: day before yesterday)')
     parser.add_argument('--lookback_days', type=int, default=7, help='Recheck recent metadata dates to catch late records')
     parser.add_argument('--session', default='arxiv-daily', help='tmux session name for start')
-    parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--workers', type=int, default=1, help='Concurrent GPT requests (default: 1)')
     parser.add_argument('--publish-site', action='store_true', help='Publish completed reports to the gh-pages branch; retry uploads separately')
     parser.add_argument('--codex_bin', default='codex')
     parser.add_argument('--state_dir', type=Path, default=BASE / 'runs' / '.scheduler')

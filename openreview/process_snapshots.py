@@ -87,7 +87,7 @@ def main(argv=None):
     parser.add_argument('--runs_dir', type=Path, default=BASE_DIR / 'runs')
     parser.add_argument('--paper_status', choices=PAPER_STATUSES, default='accepted')
     parser.add_argument('--model', choices=('gpt-6-luna', 'gpt-5.6-luna'), default='gpt-6-luna')
-    parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--workers', type=int, default=1, help='Concurrent GPT requests (default: 1)')
     parser.add_argument('--threshold', type=int, choices=range(1, 6), default=4)
     parser.add_argument('--batch_size', type=int, default=3)
     parser.add_argument('--translation_batch_size', type=int, default=10)

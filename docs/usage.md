@@ -9,7 +9,7 @@ category to incremental discovery:
 
 ```bash
 python daily_arxiv/run_daily_arxiv.py \
-  --categories cs.AI cs.LG cs.CL stat.ML cs.CV --workers 4
+  --categories cs.AI cs.LG cs.CL stat.ML cs.CV --workers 1
 ```
 
 Without a date argument, the runner synchronizes through today UTC, starting
@@ -19,8 +19,8 @@ boundary and resume unfinished model batches. Every category and pagination
 stream must finish before discovery advances.
 
 ```bash
-python daily_arxiv/run_daily_arxiv.py --sync_from 2026-10-01 --workers 4
-python daily_arxiv/run_daily_arxiv.py --through_date 2026-10-09 --workers 4
+python daily_arxiv/run_daily_arxiv.py --sync_from 2026-10-01 --workers 1
+python daily_arxiv/run_daily_arxiv.py --through_date 2026-10-09 --workers 1
 ```
 
 Explicit `--date` or `--from_date` queries always fetch fresh inputs. Use the
@@ -55,8 +55,12 @@ Evidence in one direction cannot raise another direction's score. The derived
 `relevance_score` is the maximum, used for ordering and candidate admission.
 The default admission threshold is 4; change it with `--threshold`.
 
-GPT screening uses three papers per batch; translation uses ten. `--workers 4`
-runs four concurrent requests without changing those batch sizes. Other useful
+GPT screening uses three papers per batch; translation uses ten. All GPT entry
+points, including the daily scheduler, conference queue and translation repair,
+default to `--workers 1`. Serial requests prioritize reliability during unattended
+runs. You can explicitly try `--workers 2` after confirming stable access; return
+to one worker if rate-limit errors recur. Changing workers affects concurrency,
+not batch sizes, inference-cache identity or completed reports. Other useful
 options include `--batch_size`, `--translation_batch_size`, `--timeout`,
 `--max_retries`, and `--reasoning_effort`.
 
@@ -71,7 +75,7 @@ Use an existing input without another arXiv query:
 ```bash
 python daily_arxiv/daily_arxiv_filter_codex.py \
   --input_json daily_arxiv/paper_info/papers_2026-10-09.json \
-  --date 2026-10-09 --workers 4
+  --date 2026-10-09 --workers 1
 ```
 
 Caches are identified by paper content, model, reasoning effort, prompt, and

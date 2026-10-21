@@ -22,7 +22,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--runs_dir', type=Path, default=BASE_DIR / 'runs')
     parser.add_argument('--model', default='gpt-6-luna')
-    parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--workers', type=int, default=1, help='Concurrent GPT requests (default: 1)')
     parser.add_argument('--codex_bin', default='codex')
     parser.add_argument('--include_audit', type=Path,
                         help='Also retranslate the corpus/id pairs in a prior translation_failures.json')
