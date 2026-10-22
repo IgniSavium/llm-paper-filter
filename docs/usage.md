@@ -107,20 +107,24 @@ A bare direction means a score of at least 4. Reset restores the default filter.
 The loaded HTML pool contains only admitted candidates; all scored inputs are
 stored separately, including lower scores.
 
-Bookmarks and their reading order are saved locally in the browser. **备份收藏**
+Bookmarks, their reading order and read status are saved locally in the browser. **备份收藏**
 downloads a versioned JSON file covering all reports' saved bookmarks and their
-order, including records outside the current report/filter/page. Keep this file
+order and read status, including records outside the current report/filter/page. Keep this file
 on disk. After clearing browser data, click **恢复收藏** and choose the file;
 restoration merges with existing bookmarks, deduplicates records and preserves
 reading order. Existing bookmarks keep their current order; new records are
-appended in backup order. Invalid files leave existing data intact. Existing
+appended in backup order. A paper stays read if either the current bookmark or
+the restored record says it is read; older backups without read status restore
+new bookmarks as unread. Invalid files leave existing data intact. Existing
 browser bookmark keys are migrated automatically when opening an updated reader.
 The Markdown **导出目录** remains a separate reading-list export, not a restorable
 backup. **仅看已收藏** shows all bookmarks in the current report, ignoring direction
 filters, including 4-point papers hidden by the normal default filter.
-Each outline entry groups five actions: open the original paper, copy metadata,
-move up, move down, and remove the bookmark. The original-paper link opens the
-arXiv abstract or the conference paper's OpenReview page in a new tab. In the
+Click an outline title to open the arXiv abstract or the conference paper's
+OpenReview page in a new tab. The checkbox immediately before the title marks
+the paper as read; uncheck it to mark it unread. Each outline entry groups five
+actions: jump to its report card (loading the correct page when needed), copy
+metadata, move up, move down, and remove the bookmark. In the
 bookmark view, the icon beside each card's star returns to its outline entry.
 
 Conference readers exported for Pages filter the whole corpus before pagination,

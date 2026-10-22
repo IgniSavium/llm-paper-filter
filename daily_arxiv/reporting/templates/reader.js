@@ -20,8 +20,8 @@
  const storageKey = 'arxiv-reader-bookmark-data-v2';
  let bookmarks = new Map(), bookmarkOrder = [], storageWarning = '';
 
- function bookmarkRecord(item) {
-  return {key:item.key, title:item.title, authors:item.authors || [], url:item.url || ''};
+ function bookmarkRecord(item, read=item.read === true) {
+  return {key:item.key, title:item.title, authors:item.authors || [], url:item.url || '', read};
  }
  function validateBackup(value) {
   if (!value || value.format !== 'llm-paper-filter-bookmarks' || value.version !== 1 ||
@@ -31,6 +31,7 @@
    if (!item || typeof item.key !== 'string' || !item.key.trim() || item.key.length > 2048 ||
        typeof item.title !== 'string' || !Array.isArray(item.authors) ||
        item.authors.some(author => typeof author !== 'string') || typeof item.url !== 'string' ||
+       (item.read !== undefined && typeof item.read !== 'boolean') ||
        (item.url && !/^https?:\/\//i.test(item.url))) throw new Error('备份包含无效的收藏记录。');
    if (records.has(item.key)) throw new Error('备份包含重复的收藏标识。');
    records.set(item.key, bookmarkRecord(item));
@@ -44,7 +45,7 @@
   bookmarkOrder = bookmarkOrder.filter(key => bookmarks.has(key));
   for (const key of bookmarks.keys()) {
    if (!bookmarkOrder.includes(key)) bookmarkOrder.push(key);
-   if (itemByKey.has(key)) bookmarks.set(key, bookmarkRecord(itemByKey.get(key)));
+   if (itemByKey.has(key)) bookmarks.set(key, bookmarkRecord(itemByKey.get(key), bookmarks.get(key).read === true));
   }
  }
  function backupPayload() {
@@ -98,7 +99,7 @@
   const day = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date());
   link.href = url; link.download = `paper-bookmarks-${day}.json`;
   document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  message(`已备份全部 ${payload.bookmarks.length} 篇收藏及阅读顺序。清空浏览器数据后，可从此文件恢复。`);
+  message(`已备份全部 ${payload.bookmarks.length} 篇收藏、阅读顺序及已读状态。清空浏览器数据后，可从此文件恢复。`);
  });
  byId('restore-bookmarks').addEventListener('click', () => byId('bookmark-file').click());
  byId('bookmark-file').addEventListener('change', async event => {
@@ -107,12 +108,15 @@
    if (file.size > 20 * 1024 * 1024) throw new Error('备份文件超过 20 MB。');
    const loaded = validateBackup(JSON.parse(await file.text()));
    const before = bookmarks.size;
-   for (const [key, record] of loaded.records) if (!bookmarks.has(key)) bookmarks.set(key, record);
+   for (const [key, record] of loaded.records) {
+    if (!bookmarks.has(key)) bookmarks.set(key, record);
+    else if (record.read) bookmarks.get(key).read=true;
+   }
    // Existing order wins for overlaps; restored records keep their backup order.
    for (const key of loaded.order) if (!bookmarkOrder.includes(key)) bookmarkOrder.push(key);
    saveBookmarks(); await refreshBookmarks();
    const matched = Array.from(loaded.records.keys()).filter(key => itemByKey.has(key)).length;
-   message(`已合并恢复 ${bookmarks.size-before} 篇新收藏，${matched} 篇位于本报告；全部共 ${bookmarks.size} 篇。阅读顺序已保留。`);
+   message(`已合并恢复 ${bookmarks.size-before} 篇新收藏，${matched} 篇位于本报告；全部共 ${bookmarks.size} 篇。阅读顺序已保留，已读状态已合并。`);
   } catch (error) { message(`恢复失败：${error.message} 现有收藏未被替换。`); }
   finally { event.target.value = ''; }
  });
@@ -314,18 +318,21 @@
    const row=document.createElement('li');row.className='bookmark-row';row.dataset.key=item.key;row.draggable=true;
    const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⋮⋮';
    const position=document.createElement('span');position.className='outline-index';position.textContent=index+1;
-   const link=document.createElement('a');link.className='bookmark-title';link.href='#'+item.id;link.textContent=item.title;link.draggable=false;
-   link.addEventListener('click',async event=>{event.preventDefault();if(paged){currentPage=Math.floor(index/pageSize)+1;await filter(false);}document.getElementById(item.id)?.scrollIntoView({block:'start'});});
-   const actions=document.createElement('div');actions.className='order-buttons';
-   const sourceLink=document.createElement('a');sourceLink.className='paper-source-link';sourceLink.draggable=false;
-   sourceLink.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M21 3 10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/></svg>';
+   const readToggle=document.createElement('input');readToggle.type='checkbox';readToggle.className='read-toggle';readToggle.checked=bookmarks.get(item.key)?.read === true;
+   readToggle.setAttribute('aria-label',`已读：${item.title}`);readToggle.title='勾选表示已读';row.classList.toggle('is-read',readToggle.checked);
+   readToggle.addEventListener('change',()=>{bookmarks.get(item.key).read=readToggle.checked;row.classList.toggle('is-read',readToggle.checked);saveBookmarks();});
+   const link=document.createElement('a');link.className='bookmark-title';link.textContent=item.title;link.draggable=false;
    let sourceLabel='暂无论文原文链接';
    if (/^https?:\/\//i.test(item.url)) {
-    sourceLink.href=item.url;sourceLink.target='_blank';sourceLink.rel='noopener noreferrer';
+    link.href=item.url;link.target='_blank';link.rel='noopener noreferrer';
     const host=new URL(item.url).hostname;
     sourceLabel=['arxiv.org','www.arxiv.org','export.arxiv.org'].includes(host)?'在 arXiv 查看摘要':(host==='openreview.net'?'在 OpenReview 查看论文':'打开论文原文');
-   } else { sourceLink.setAttribute('aria-disabled','true');sourceLink.tabIndex=-1; }
-   sourceLink.title=sourceLabel;sourceLink.setAttribute('aria-label',sourceLabel);actions.append(sourceLink);
+   } else { link.setAttribute('aria-disabled','true');link.tabIndex=-1; }
+   link.title=sourceLabel;
+   const actions=document.createElement('div');actions.className='order-buttons';
+   const infoButton=document.createElement('button');infoButton.type='button';infoButton.className='paper-info-link';infoButton.title='查看报告内的论文信息';infoButton.setAttribute('aria-label',infoButton.title);
+   infoButton.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>';
+   infoButton.addEventListener('click',async()=>{if(paged){currentPage=Math.floor(index/pageSize)+1;await filter(false);}const card=document.getElementById(item.id);card?.scrollIntoView({block:'start'});card?.querySelector('.outline-return')?.focus({preventScroll:true});});actions.append(infoButton);
    const exportButton=document.createElement('button');exportButton.type='button';exportButton.textContent='↗';exportButton.title='复制这篇论文的 Markdown metadata';
    exportButton.setAttribute('aria-label',exportButton.title);
    exportButton.addEventListener('click',async()=>{try{const card=await cardFor(item);await copyMarkdown(paperMetadataMarkdown(card),'已复制论文 metadata。',exportButton);}catch(error){message(`加载失败：${error.message}`);}});actions.append(exportButton);
@@ -336,7 +343,7 @@
    const removeButton=document.createElement('button');removeButton.type='button';removeButton.className='remove-bookmark';removeButton.title='取消收藏这篇论文';removeButton.setAttribute('aria-label',removeButton.title);
    removeButton.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
    removeButton.addEventListener('click',async()=>{bookmarks.delete(item.key);saveBookmarks();await refreshBookmarks();const rows=byId('bookmark-list').children;const focus=rows[Math.min(index,rows.length-1)]?.querySelector('.bookmark-title')||byId('marked-only');focus.focus({preventScroll:true});});actions.append(removeButton);
-   row.append(handle,position,link,actions);list.append(row);
+   row.append(handle,position,readToggle,link,actions);list.append(row);
   });
  }
  function clearDrag(){for(const row of byId('bookmark-list').children)row.classList.remove('dragging','drop-before','drop-after');}
