@@ -1,24 +1,35 @@
 [
   {
+    "date": "2026-10-21",
+    "url": "reports/report_2026-10-21.html",
+    "papers": 272,
+    "score_5_counts": {
+      "MechInterp": 17,
+      "CompGen": 1,
+      "Reasoning": 12,
+      "Systems": 18
+    }
+  },
+  {
     "date": "2026-10-20",
     "url": "reports/report_2026-10-20.html",
-    "papers": 507,
+    "papers": 496,
     "score_5_counts": {
       "MechInterp": 27,
       "CompGen": 8,
       "Reasoning": 31,
-      "Systems": 30
+      "Systems": 29
     }
   },
   {
     "date": "2026-10-19",
     "url": "reports/report_2026-10-19.html",
-    "papers": 252,
+    "papers": 245,
     "score_5_counts": {
       "MechInterp": 9,
       "CompGen": 2,
       "Reasoning": 12,
-      "Systems": 11
+      "Systems": 10
     }
   },
   {
@@ -48,7 +59,7 @@
   {
     "date": "2026-10-16",
     "url": "reports/report_2026-10-16.html",
-    "papers": 291,
+    "papers": 287,
     "score_5_counts": {
       "MechInterp": 23,
       "CompGen": 3,
