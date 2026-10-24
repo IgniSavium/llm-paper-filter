@@ -1,5 +1,16 @@
 [
   {
+    "date": "2026-10-23",
+    "url": "reports/report_2026-10-23.html",
+    "papers": 199,
+    "score_5_counts": {
+      "MechInterp": 13,
+      "CompGen": 1,
+      "Reasoning": 11,
+      "Systems": 16
+    }
+  },
+  {
     "date": "2026-10-22",
     "url": "reports/report_2026-10-22.html",
     "papers": 206,
