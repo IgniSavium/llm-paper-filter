@@ -17,6 +17,7 @@ from daily_arxiv.reporting.artifacts import load_completed_report
 from daily_arxiv.reporting.html import generate_mobile_html_report
 
 FIRST_DATE = '2026-10-08'
+DAILY_PUBLICATION_THRESHOLD = 5
 
 
 def release_cutoff(now=None, timezone='Asia/Shanghai', day_lag=2):
@@ -42,11 +43,14 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
         # after the runner has finished (the scheduler supplies its completed date).
         complete = load_completed_report(model_dir, day)
         payload = complete['hits_zh']
-        if not payload['hits_zh']:
+        published = [paper for paper in payload['hits_zh']
+                     if any(paper.get('eval', {}).get('scores', {}).get(category) == DAILY_PUBLICATION_THRESHOLD
+                            for category in CATEGORIES)]
+        if not published:
             all_papers = complete['all_papers']
             hits = complete['hits']
             if (all_papers['metadata']['target_date'] != day or hits['metadata']['target_date'] != day
-                    or hits['hits']):
+                    or (not payload['hits_zh'] and hits['hits'])):
                 raise ValueError(f'Incomplete empty report: {day}')
             status = 'no_updates' if not all_papers['all_papers_evaluated'] else 'no_matches'
             entries.append({'date': day, 'url': None, 'papers': 0, 'status': status,
@@ -54,17 +58,20 @@ def export_site(model_dir, destination, first_date=FIRST_DATE, through_date=None
             continue
         # Render from the validated generation. This also upgrades legacy readers
         # locally, without rescoring or trusting their old, unversioned HTML.
-        source = Path(generate_mobile_html_report(payload['hits_zh'], day, destination,
-                                                  metadata=payload['metadata']))
+        metadata = dict(payload['metadata'], threshold_used=DAILY_PUBLICATION_THRESHOLD,
+                        total_hits=len(published),
+                        new_papers=sum(paper.get('status') == 'v1 (New)' for paper in published))
+        metadata['version_updates'] = len(published) - metadata['new_papers']
+        source = Path(generate_mobile_html_report(published, day, destination, metadata=metadata))
         content = source.read_text(encoding='utf-8')
         nav = '<nav style="padding:12px 24px"><a href="../index.html">← 日期归档</a></nav>'
         content = re.sub(r'(<body\b[^>]*>)', lambda m: m[1] + nav, content, count=1, flags=re.I)
         (reports / source.name).write_text(content, encoding='utf-8')
         source.unlink()
         counts = {category: sum(p.get('eval', {}).get('scores', {}).get(category) == 5
-                                for p in payload['hits_zh']) for category in CATEGORIES}
+                                for p in published) for category in CATEGORIES}
         entries.append({'date': day, 'url': 'reports/' + source.name,
-                        'papers': len(payload['hits_zh']), 'score_5_counts': counts})
+                        'papers': len(published), 'score_5_counts': counts})
     if (not entries or entries[-1]['date'] != first_date) and not (allow_pending and not entries):
         raise ValueError(f'Starting report {first_date} must exist before publication')
     keep = {Path(row['url']).name for row in entries if row['url']}

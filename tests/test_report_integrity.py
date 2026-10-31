@@ -108,6 +108,33 @@ class IntegrityTests(unittest.TestCase):
         rows = export_site(self.model, self.root / 'site', first_date=DAY, through_date=DAY)
         self.assertEqual(rows[0]['status'], 'no_matches')
 
+    def test_daily_publication_omits_four_point_papers_from_html_and_counts(self):
+        four = paper('Four point only', score=4)
+        five = paper('Systems five point', score=1)
+        five['url'] = 'https://arxiv.org/abs/2610.00002v1'
+        five['eval']['scores']['Systems'] = 5
+        save_reports([four, five], [translated(four), translated(five)], DAY, 4, self.model)
+        before = {path: path.read_bytes() for path in self.model.rglob('*') if path.is_file()}
+        rows = export_site(self.model, self.root / 'site', first_date=DAY, through_date=DAY)
+        html = (self.root / f'site/reports/report_{DAY}.html').read_text()
+        self.assertNotIn('Four point only', html)
+        self.assertIn('Systems five point', html)
+        self.assertEqual(rows[0]['papers'], 1)
+        self.assertEqual(rows[0]['score_5_counts'], dict(MechInterp=0, CompGen=0, Reasoning=0, Systems=1))
+        self.assertTrue(all(path.read_bytes() == content for path, content in before.items()))
+
+    def test_four_point_only_date_removes_previously_published_page(self):
+        self.save(paper(score=4))
+        site = self.root / 'site'
+        report = site / f'reports/report_{DAY}.html'
+        report.parent.mkdir(parents=True)
+        report.write_text('Previously published four point paper')
+        rows = export_site(self.model, site, first_date=DAY, through_date=DAY)
+        self.assertEqual(rows[0]['status'], 'no_matches')
+        self.assertIsNone(rows[0]['url'])
+        self.assertFalse(report.exists())
+        self.assertNotIn(f'reports/report_{DAY}.html', (site / 'latest.html').read_text())
+
     def test_empty_site_can_publish_to_a_local_remote_and_repeat_idempotently(self):
         self.save(paper(score=1))
         remote = self.root / 'remote.git'

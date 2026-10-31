@@ -31,8 +31,10 @@ python daily_arxiv/run_daily_arxiv.py --date 2026-10-08 --workers 1
 ```
 
 Open `daily_arxiv/runs/gpt-6-luna_runs/html_reports/report_YYYY-MM-DD.html`.
-At least one direction must score 4 or higher to enter the report; the default
-reading filter is `MechInterp=5 OR CompGen=5`.
+Local reports retain papers scoring 4 or higher in at least one direction.
+Published daily arXiv reports include only papers scoring 5 in at least one
+direction, including historical reports. Conference publication rules are unchanged.
+The default reading filter is `MechInterp=5 OR CompGen=5`.
 
 Dates refer to **UTC arXiv OAI metadata modification dates**, not submission or
 announcement dates. Historical queries use currently available metadata.

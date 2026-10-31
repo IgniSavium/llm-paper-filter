@@ -54,6 +54,10 @@ Each paper receives four independent scores in `eval.scores`:
 Evidence in one direction cannot raise another direction's score. The derived
 `relevance_score` is the maximum, used for ordering and candidate admission.
 The default admission threshold is 4; change it with `--threshold`.
+This controls local reports and translation. Website export separately includes
+only daily arXiv papers with a score of 5 in at least one direction, across all
+historical dates. Four-point-only papers remain in local caches and reports;
+conference readers keep their existing admission rules.
 
 GPT screening uses three papers per batch; translation uses ten. All GPT entry
 points, including the daily scheduler, conference queue and translation repair,
