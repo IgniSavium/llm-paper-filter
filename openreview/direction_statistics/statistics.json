@@ -171,8 +171,13 @@
       "display_submitted": 21575
     }
   ],
-  "missing_acceptance_rates": [],
-  "generated_at": "2026-10-16T20:39:19+08:00",
+  "missing_acceptance_rates": [
+    {
+      "conference": "NeurIPS",
+      "year": 2026
+    }
+  ],
+  "generated_at": "2026-11-01T01:04:07+08:00",
   "denominator": "All scored papers in the same conference/year/status",
   "score": 5,
   "metrics": {
@@ -568,6 +573,46 @@
         "both": {
           "count": 2,
           "percentage_points": 0.016608048647734425
+        }
+      }
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2026,
+      "status": "accepted",
+      "total": 5348,
+      "counts": {
+        "mech": 155,
+        "comp": 22,
+        "either": 175,
+        "both": 2
+      },
+      "rates": {
+        "mech": 2.8982797307404637,
+        "comp": 0.4113687359760658,
+        "either": 3.2722513089005236,
+        "both": 0.037397157816005985
+      },
+      "fetched_at": "2026-10-31T09:43:48.060987+00:00",
+      "source": "/data/xinmiao/llm-paper-filter/openreview/runs/gpt-6-luna_runs/NeurIPS_2026/all_papers/all_papers_2026-01-01.json",
+      "paper_info_sha256": "5581343f84c7ba810c126d1b9a66fa15ee6ecef7c6f432f9ac341e2f3e103919",
+      "filter_prompt_sha256": "8748f3e46ec2d7ab76a499749b3e395326a073afd9bcefdaf3a9305807a6a6a6",
+      "change": {
+        "mech": {
+          "count": 64,
+          "percentage_points": 1.1767511647170055
+        },
+        "comp": {
+          "count": -4,
+          "percentage_points": -0.08049656860206506
+        },
+        "either": {
+          "count": 59,
+          "percentage_points": 1.0777753346288623
+        },
+        "both": {
+          "count": 1,
+          "percentage_points": 0.018479261486077873
         }
       }
     },

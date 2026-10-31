@@ -17,6 +17,23 @@
     }
   },
   {
+    "conference": "NeurIPS",
+    "year": 2026,
+    "status": "accepted",
+    "papers": 604,
+    "url": "openreview/NeurIPS_2026/html_reports/report_2026-01-01.html",
+    "counts": {
+      "MechInterp": {
+        "4": 272,
+        "5": 155
+      },
+      "CompGen": {
+        "4": 182,
+        "5": 22
+      }
+    }
+  },
+  {
     "conference": "ICML",
     "year": 2026,
     "status": "accepted",
