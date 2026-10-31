@@ -17,11 +17,14 @@ from openreview.fetching import BASE_DIR, CONFERENCES, PAPER_STATUSES, corpus_na
 from openreview.run_openreview import build_command
 
 
-def snapshot_queue(directory, paper_status='accepted'):
+def snapshot_queue(directory, paper_status='accepted', *, conferences=None, years=None):
     jobs = []
     for path in Path(directory).glob('*/papers_*.json'):
         metadata = json.loads(path.read_text(encoding='utf-8')).get('metadata', {})
         conference, year = metadata.get('conference'), metadata.get('conference_year')
+        if (conferences is not None and conference not in conferences
+                or years is not None and year not in years):
+            continue
         if metadata.get('source') != 'openreview' or conference not in CONFERENCES or type(year) is not int:
             raise ValueError(f'Invalid OpenReview snapshot metadata: {path}')
         status = metadata.get('paper_status', 'accepted')
@@ -86,6 +89,8 @@ def main(argv=None):
     parser.add_argument('--paper_info_dir', type=Path, default=BASE_DIR / 'paper_info')
     parser.add_argument('--runs_dir', type=Path, default=BASE_DIR / 'runs')
     parser.add_argument('--paper_status', choices=PAPER_STATUSES, default='accepted')
+    parser.add_argument('--conferences', nargs='+', choices=CONFERENCES)
+    parser.add_argument('--years', nargs='+', type=int)
     parser.add_argument('--model', choices=('gpt-6-luna', 'gpt-5.6-luna'), default='gpt-6-luna')
     parser.add_argument('--workers', type=int, default=1, help='Concurrent GPT requests (default: 1)')
     parser.add_argument('--threshold', type=int, choices=range(1, 6), default=4)
@@ -104,7 +109,8 @@ def main(argv=None):
                    'retry_delay', 'max_retry_delay'):
         if getattr(args, option) < 1:
             parser.error(f'--{option} must be positive')
-    jobs = snapshot_queue(args.paper_info_dir, args.paper_status)
+    jobs = snapshot_queue(args.paper_info_dir, args.paper_status,
+                          conferences=args.conferences, years=args.years)
     if not jobs:
         raise ValueError('No saved conference snapshots found')
     print('Queue: ' + ' → '.join(f"{j['conference']} {j['year']} ({j['papers']})" for j in jobs), flush=True)

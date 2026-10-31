@@ -21,6 +21,39 @@ def fixture(root, conference, year):
 
 
 class QueueTests(unittest.TestCase):
+    def test_usage_limit_can_outlast_five_hours_without_exhausting_queue_retries(self):
+        with tempfile.TemporaryDirectory() as root:
+            inputs, runs = Path(root) / 'inputs', Path(root) / 'runs'
+            fixture(inputs, 'NeurIPS', 2026)
+            cache = runs / 'gpt-6-luna_runs/NeurIPS_2026/.codex_cache/evaluation/completed.json'
+            write_json(cache, {'completed_before_limit': True})
+            before = cache.read_bytes()
+            results = [Mock(returncode=1) for _ in range(22)] + [Mock(returncode=0)]
+            argv = ['--paper_info_dir', str(inputs), '--runs_dir', str(runs),
+                    '--conferences', 'NeurIPS', '--years', '2026',
+                    '--retry_delay', '300', '--max_retry_delay', '900']
+            # Exercise the controller; artifact validation is covered separately.
+            def complete(output, day, identity, check_marker=True):
+                return not check_marker
+            with patch('openreview.process_snapshots.subprocess.run', side_effect=results) as child, \
+                    patch('openreview.process_snapshots.reports_complete', side_effect=complete), \
+                    patch('openreview.process_snapshots.time.sleep') as sleep:
+                self.assertEqual(main(argv), 0)
+            waits = [call.args[0] for call in sleep.call_args_list]
+            self.assertGreaterEqual(sum(waits), 5 * 3600)
+            self.assertEqual(max(waits), 900)
+            self.assertEqual(child.call_count, 23)
+            self.assertEqual(cache.read_bytes(), before)
+            state = json.loads((runs / '.queue/gpt-6-luna/state.json').read_text())
+            self.assertEqual(state['status'], 'complete')
+
+    def test_single_conference_selection_leaves_other_corpora_out(self):
+        with tempfile.TemporaryDirectory() as root:
+            for conference, year in [('ICLR', 2026), ('NeurIPS', 2025), ('NeurIPS', 2026)]:
+                fixture(root, conference, year)
+            jobs = snapshot_queue(root, conferences=['NeurIPS'], years=[2026])
+            self.assertEqual([(j['conference'], j['year']) for j in jobs], [('NeurIPS', 2026)])
+
     def test_cross_year_order_skips_missing_and_empty_venues(self):
         with tempfile.TemporaryDirectory() as root:
             for conference, year in [('ICLR', 2027), ('ICML', 2026), ('ICLR', 2026),

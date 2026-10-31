@@ -181,6 +181,10 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         reading_source = 'OpenReview' if urlparse(url).hostname == 'openreview.net' else 'arXiv'
         if not url.startswith(("https://", "http://")):
             url = "#"
+        official_link = ''
+        official_url = paper.get('official_url', '')
+        if official_url.startswith('https://') and urlparse(official_url).hostname == 'neurips.cc':
+            official_link = f'<a href="{escape(official_url, quote=True)}" target="_blank" rel="noopener noreferrer">NeurIPS 官网 ↗</a>'
         extra = export_cache.get(paper.get('url', ''), {})
         export_metadata = {
             'title': paper.get('title', ''), 'authors': paper.get('authors', []),
@@ -210,7 +214,7 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
     <div class="abstract-toolbar"><select class="paper-mode" aria-label="这篇论文的摘要语言"><option value="both">中英对照</option><option value="en">仅英文</option><option value="zh">仅中文</option></select></div>
     <div class="abstract-columns"><section class="abstract-en" lang="en"><h3>ENGLISH</h3><p>{sentence_markup(en, en_ids)}</p></section><section class="abstract-zh" lang="zh-CN"><h3>中文</h3><p>{sentence_markup(zh, zh_ids)}</p></section></div>
   </details>
-  <footer><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span><a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">在 {reading_source} 阅读 ↗</a></footer>
+  <footer><span class="result-position" aria-label="当前筛选中的位置">{index}/{len(papers)}</span>{official_link}<a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">在 {reading_source} 阅读 ↗</a></footer>
 </article>''')
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     direction_options = "".join(
@@ -232,6 +236,10 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         template = template.replace('(MechInterp=5 OR CompGen=4) AND NOT Systems=5',
                                     'MechInterp=5 OR CompGen=4')
     content = template.replace("{{DATE}}", escape(display_label)).replace("{{DIRECTION_OPTIONS}}", direction_options)
+    source_note = ''
+    if (metadata or {}).get('discovery_method') == 'neurips_official_website':
+        source_note = '<p class="subtitle">NeurIPS 官方网站公开元数据 · 覆盖当前公开的主会录用列表，后续可能更新。</p>'
+    content = content.replace('{{SOURCE_NOTE}}', source_note)
     content = content.replace("{{DEFAULT_EXPRESSION}}", escape(DEFAULT_FILTER_EXPRESSION, quote=True))
     content = content.replace("{{DEFAULT_EXPRESSION_JSON}}", json.dumps(DEFAULT_FILTER_EXPRESSION))
     legacy = any("categories" not in p.get("eval", {}) and "category" in p.get("eval", {}) for p in papers)
@@ -268,7 +276,8 @@ def generate_mobile_html_report(translated_hits, target_date_str, save_dir, meta
         if metadata.get('paper_status') == 'submitted':
             note += f" · {metadata['conference']} {metadata['conference_year']} 主会公开在审投稿，尚未录用；不含已决定、撤稿及非公开论文，公开范围可能不完整；请使用 refresh 更新"
         else:
-            note += f" · {metadata['conference']} {metadata['conference_year']} 主会已录用论文（OpenReview 公开元数据）；当年列表可能继续更新"
+            provider = 'NeurIPS 官方网站公开元数据' if metadata.get('discovery_method') == 'neurips_official_website' else 'OpenReview 公开元数据'
+            note += f" · {metadata['conference']} {metadata['conference_year']} 主会已录用论文（{provider}）；当年列表可能继续更新"
     content = content.replace("{{CLASSIFICATION_NOTE}}", escape(note))
     directory = Path(save_dir) / "html_reports"
     directory.mkdir(parents=True, exist_ok=True)

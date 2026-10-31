@@ -97,6 +97,38 @@ Authentication does not guarantee that the server's challenge will disappear.
 
 ## Fetch and filter
 
+For NeurIPS 2026, the official website can supply accepted main-track metadata
+while OpenReview's public API remains empty:
+
+```bash
+python openreview/fetch_neurips_papers.py --year 2026
+python openreview/run_openreview.py --conferences NeurIPS --years 2026 --workers 1
+```
+
+The first command fetches metadata only. It deduplicates oral/poster/location
+events by OpenReview forum ID and excludes other tracks. Missing bulk abstracts
+are recovered from official paper pages, with resumable local caches. A snapshot
+is saved only after every listed main-track paper has title, authors and abstract.
+This covers the current public official listing, not a certified final proceedings
+count. Provenance identifies the NeurIPS website in snapshots and readers; the
+existing conference corpus format keeps filtering and publication compatible.
+PDF URLs are retained only when supplied, never inferred to be available.
+The second command reuses the saved snapshot; do not add `--refresh`, which
+explicitly selects a new OpenReview API harvest. Conference thresholds remain 4.
+
+For a single-corpus unattended job with cached resume after subscription quota
+resets, use the queue instead:
+
+```bash
+python openreview/process_snapshots.py --conferences NeurIPS --years 2026 \
+  --workers 1 --threshold 4 --retry_delay 300 --max_retry_delay 900
+```
+
+Queue retries have no total attempt limit: they wait 5, then 10, then at most
+15 minutes between attempts, including across a five-hour quota window.
+Completed evaluation/translation batches stay cached. After success, regenerate
+statistics and publish using the normal commands below.
+
 To process only existing snapshots in newest-first conference order, with automatic
 retry and cache-based resume:
 
