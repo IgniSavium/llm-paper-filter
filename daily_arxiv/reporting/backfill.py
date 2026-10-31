@@ -12,7 +12,7 @@ from daily_arxiv.filtering.prompts import PROMPT_SHA256, evaluation_score
 from daily_arxiv.fetching.snapshots import paper_info_digest, save_snapshot
 
 
-def backfill_daily_reports(model_dir, paper_info_dir, start, end, today, threshold=4):
+def backfill_daily_reports(model_dir, paper_info_dir, start, end, today, threshold=5):
     model_dir = Path(model_dir)
     sources = sorted((model_dir / 'all_papers').glob('all_papers_*.json'))
     sources += sorted((model_dir / 'updates').glob('*/all_papers/all_papers_*.json'))

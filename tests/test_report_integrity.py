@@ -173,7 +173,12 @@ class IntegrityTests(unittest.TestCase):
             codex.main(['--input_json', str(path), '--date', DAY, '--threshold', '5',
                         '--reasoning_effort', 'high', '--save_dir', str(new), '--codex_bin', '/missing'])
             client.assert_not_called()
-        self.assertEqual(load_completed_report(new, DAY), old)
+        current = load_completed_report(new, DAY)
+        self.assertEqual(current['all_papers']['all_papers_evaluated'], old['all_papers']['all_papers_evaluated'])
+        self.assertEqual(current['hits_zh']['hits_zh'], old['hits_zh']['hits_zh'])
+        self.assertEqual(current['all_papers']['metadata']['threshold_used'], 5)
+        self.assertEqual(current['all_papers']['metadata']['filter_prompt_sha256'],
+                         old['all_papers']['metadata']['filter_prompt_sha256'])
 
     def test_same_version_metadata_changes_are_discovered_and_keep_existing_scores(self):
         self.save()
@@ -209,11 +214,62 @@ class IntegrityTests(unittest.TestCase):
             factory.return_value.effort = 'high'
             factory.return_value.request.side_effect = request
             codex.main(['--input_json', str(source), '--save_dir', str(self.model), '--threshold', '5'])
-        self.assertEqual([(len(records), stage) for records, stage in calls], [(1, False), (1, True)])
+        self.assertEqual([(len(records), stage) for records, stage in calls], [(1, False)])
         self.assertEqual(calls[0][0][0]['title'], 'New paper')
         evaluated = load_completed_report(self.model, DAY)['all_papers']['all_papers_evaluated']
         self.assertEqual(evaluated[0]['eval'], paper()['eval'])
-        self.assertEqual(load_completed_report(self.model, DAY)['all_papers']['metadata']['threshold_used'], 4)
+        complete = load_completed_report(self.model, DAY)
+        self.assertEqual(complete['all_papers']['metadata']['threshold_used'], 5)
+        self.assertEqual(len(complete['hits']['hits']), 1)
+        self.assertEqual(len(complete['hits_zh']['hits_zh']), 1)
+
+    def test_reused_four_point_date_is_pruned_without_model_calls(self):
+        row = paper(score=4)
+        self.save(row)
+        source = save_snapshot([row], DAY, self.root / 'inputs')
+        with patch.object(codex, 'CodexClient') as client:
+            codex.main(['--input_json', str(source), '--save_dir', str(self.model), '--threshold', '4'])
+            client.assert_not_called()
+        complete = load_completed_report(self.model, DAY)
+        self.assertEqual(complete['all_papers']['metadata']['threshold_used'], 5)
+        self.assertEqual(complete['hits']['hits'], [])
+        self.assertEqual(complete['hits_zh']['hits_zh'], [])
+        self.assertFalse((self.model / f'html_reports/report_{DAY}.html').exists())
+
+    def test_new_daily_input_translates_and_caches_only_five_point_hits(self):
+        four, five = paper('Four only', score=4), paper('Five point', score=5)
+        five['url'] = 'https://arxiv.org/abs/2610.00002v1'
+        source = save_snapshot([four, five], DAY, self.root / 'inputs')
+        translated_titles = []
+        def request(instruction, records, translation=False):
+            if translation:
+                translated_titles.extend(r['title'] for r in records)
+                return {r['id']: dict(zh_title='五分论文', zh_abstract='研究模型特征。', zh_reason='核心贡献。')
+                        for r in records}
+            return {r['id']: normalize_evaluation((four if r['title'] == 'Four only' else five)['eval'])
+                    for r in records}
+        with patch.object(codex, 'CodexClient') as factory:
+            factory.return_value.model = 'test-model'
+            factory.return_value.effort = 'medium'
+            factory.return_value.request.side_effect = request
+            codex.main(['--input_json', str(source), '--save_dir', str(self.model)])
+        self.assertEqual(translated_titles, ['Five point'])
+        self.assertEqual(len(list((self.model / '.codex_cache/translation').glob('*.json'))), 1)
+        complete = load_completed_report(self.model, DAY)
+        self.assertEqual([p['title'] for p in complete['hits']['hits']], ['Five point'])
+        self.assertEqual([p['title'] for p in complete['hits_zh']['hits_zh']], ['Five point'])
+
+    def test_conference_four_point_date_keeps_translations_and_threshold(self):
+        row = paper(score=4)
+        source = save_snapshot([row], DAY, self.root / 'inputs', source='openreview')
+        save_reports([row], [translated(row)], DAY, 4, self.model,
+                     source_metadata={'source': 'openreview', 'conference': 'ICLR', 'conference_year': 2026})
+        with patch.object(codex, 'CodexClient') as client:
+            codex.main(['--input_json', str(source), '--save_dir', str(self.model)])
+            client.assert_not_called()
+        complete = load_completed_report(self.model, DAY)
+        self.assertEqual(complete['all_papers']['metadata']['threshold_used'], 4)
+        self.assertEqual(len(complete['hits_zh']['hits_zh']), 1)
 
     def test_conference_statistics_keep_scores_from_a_historical_prompt(self):
         from openreview.analyze_direction_counts import collect

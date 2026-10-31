@@ -343,8 +343,10 @@ def process_batches(papers, client, cache_dir, batch_size=3, translation=False, 
 def save_reports(papers, translated, target_date, threshold, save_dir, input_digest=None, source_metadata=None):
     """Render a full generation before committing its files and completion marker."""
     from daily_arxiv.reporting.artifacts import (
-        report_paths, manifest_path, file_digest, report_lock, validate_payloads,
+        report_paths, manifest_path, file_digest, report_lock, validate_payloads, without_translation,
     )
+    # Reused/merged rows may carry an old translation below the current cutoff.
+    papers = [without_translation(p) if evaluation_score(p['eval']) < threshold else p for p in papers]
     # Validate the entire translated set before replacing any report files.
     for paper in translated:
         validate_translated_paper(paper)
@@ -418,21 +420,24 @@ def save_reports(papers, translated, target_date, threshold, save_dir, input_dig
     print(f"Saved complete report: {save_dir}, {target_date}, {len(translated)} translated hits", flush=True)
 
 
-def reuse_completed_input(save_dir, date, papers):
+def reuse_completed_input(save_dir, date, papers, *, minimum_threshold=None):
     """Preserve completed dates across model/config changes, without inference."""
     from daily_arxiv.reporting.artifacts import find_completed_report
     found = find_completed_report(save_dir, date, paper_info_digest(papers))
     if found is None:
         return False
     source, reports = found
-    if source.resolve() != Path(save_dir).resolve():
+    old_threshold = reports['all_papers']['metadata']['threshold_used']
+    threshold = max(old_threshold, minimum_threshold or old_threshold)
+    if source.resolve() != Path(save_dir).resolve() or threshold != old_threshold:
         metadata = dict(reports['all_papers']['metadata'])
         for key in ('total_papers_fetched', 'total_hits', 'accepted_papers', 'submitted_papers',
-                    'new_papers', 'version_updates'):
+                    'new_papers', 'version_updates', 'threshold_used'):
             metadata.pop(key, None)
         metadata['paper_info_sha256'] = paper_info_digest(papers)
-        save_reports(reports['all_papers']['all_papers_evaluated'], reports['hits_zh']['hits_zh'],
-                     date, metadata['threshold_used'], save_dir,
+        translated = [p for p in reports['hits_zh']['hits_zh'] if evaluation_score(p['eval']) >= threshold]
+        save_reports(reports['all_papers']['all_papers_evaluated'], translated,
+                     date, threshold, save_dir,
                      input_digest=metadata['paper_info_sha256'], source_metadata=metadata)
     print(f'Preserving completed date {date} from {source}; no model work.', flush=True)
     return True

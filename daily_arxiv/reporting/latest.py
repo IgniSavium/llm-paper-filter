@@ -11,7 +11,7 @@ from daily_arxiv.fetching.snapshots import paper_info_digest
 from daily_arxiv.reporting.artifacts import load_completed_report, content_key
 
 
-def merge_latest_reports(model_dir, start, end, threshold=4):
+def merge_latest_reports(model_dir, start, end, threshold=5):
     model_dir = Path(model_dir)
     sources = sorted((model_dir / 'all_papers').glob('all_papers_*.json'))
     sources += sorted((model_dir / 'updates').glob('*/all_papers/all_papers_*.json'))
@@ -39,7 +39,7 @@ def merge_latest_reports(model_dir, start, end, threshold=4):
             continue
         dates.add(day)
         prompt_hashes[day].add(meta.get('filter_prompt_sha256'))
-        thresholds.setdefault(day, meta['threshold_used'])
+        thresholds.setdefault(day, 5)
         for category in meta.get('arxiv_categories', []):
             if category not in categories:
                 categories.append(category)

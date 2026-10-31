@@ -140,7 +140,8 @@ class CodexClient:
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Daily arXiv filter using GPT-6 Luna and Codex subscription")
     parser.add_argument("--date", help="YYYY-MM-DD; defaults to yesterday UTC")
-    parser.add_argument("--threshold", type=int, choices=range(1, 6), default=4)
+    parser.add_argument("--threshold", type=int, choices=range(1, 6),
+                        help="arXiv requires 5; conference default: 4")
     parser.add_argument("--model", choices=("gpt-6-luna", "gpt-5.6-luna"), default=MODEL,
                         help="Explicit Luna model selection; no automatic fallback")
     parser.add_argument("--save_dir", help="Output directory; defaults to daily_arxiv/runs/MODEL_runs")
@@ -170,13 +171,16 @@ def main(argv=None):
         except ValueError:
             parser.error("--date must be YYYY-MM-DD")
     papers, date, source_metadata = load_filter_input(args)
+    conference = source_metadata.get('source') == 'openreview'
+    args.threshold = (args.threshold if args.threshold is not None else 4) if conference else 5
     input_digest = paper_info_digest(papers)
-    if reuse_completed_input(args.save_dir, date, papers):
+    if reuse_completed_input(args.save_dir, date, papers, minimum_threshold=None if conference else 5):
         return
     cache_dir = args.cache_dir or Path(args.save_dir) / ".codex_cache"
     if papers:
         from daily_arxiv.reporting.artifacts import prior_paper_results, completed_date_threshold
-        args.threshold = completed_date_threshold(args.save_dir, date, args.threshold)
+        if conference:
+            args.threshold = completed_date_threshold(args.save_dir, date, args.threshold)
         prior = prior_paper_results(args.save_dir, papers)
         client = None
         if needs_inference(papers, prior, args.threshold):

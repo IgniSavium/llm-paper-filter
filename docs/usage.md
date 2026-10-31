@@ -53,11 +53,10 @@ Each paper receives four independent scores in `eval.scores`:
 
 Evidence in one direction cannot raise another direction's score. The derived
 `relevance_score` is the maximum, used for ordering and candidate admission.
-The default admission threshold is 4; change it with `--threshold`.
-This controls local reports and translation. Website export separately includes
-only daily arXiv papers with a score of 5 in at least one direction, across all
-historical dates. Four-point-only papers remain in local caches and reports;
-conference readers keep their existing admission rules.
+Daily arXiv admission requires a score of 5 in at least one direction. Only those
+papers are translated, saved in `hits` / `hits_zh` and local HTML, and published.
+Raw inputs and evaluation records retain rejected papers for completeness checks
+and recovery without repeated scoring. Conference admission still defaults to 4.
 
 GPT screening uses three papers per batch; translation uses ten. All GPT entry
 points, including the daily scheduler, conference queue and translation repair,
@@ -83,11 +82,13 @@ python daily_arxiv/daily_arxiv_filter_codex.py \
 ```
 
 Caches are identified by paper content, model, reasoning effort, prompt, and
-schema. Completed dates are preserved even after changing the model, rubric,
-reasoning effort, or threshold; these changes apply to unfinished/new work.
+schema. Completed scores are preserved even after changing the model, rubric,
+or reasoning effort; these changes apply to unfinished/new work.
 Unchanged title/abstract content also reuses saved decisions and translations
 when bibliographic metadata changes. A changed title/abstract is new model work.
-Late additions to an existing date retain that date's original admission threshold.
+Daily arXiv reruns, including late additions, use the five-point admission rule.
+Existing four-point hits and translations are removed from regenerated local
+reports without rescoring. Conference dates retain their original threshold.
 To deliberately run a new comparison, use a separate `--runs_dir` outside the
 existing run root (or an independent `--save_dir` for a backend entry point).
 Rerun an interrupted command to reuse validated completed work. `--dry_run` on the

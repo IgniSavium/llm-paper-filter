@@ -120,7 +120,8 @@ def main(argv=None):
     parser.add_argument("--sync_from", help="Extend discovery back to this UTC metadata date (YYYY-MM-DD)")
     parser.add_argument("--categories", nargs="+", default=list(DEFAULT_CATEGORIES), help="arXiv categories to synchronize")
     parser.add_argument("--models", nargs="+", choices=MODELS, default=["gpt-6-luna"])
-    parser.add_argument("--threshold", type=int, choices=range(1, 6), default=4)
+    parser.add_argument("--threshold", type=int, choices=(5,), default=5,
+                        help="Only five-point arXiv papers are translated and retained as hits")
     parser.add_argument("--paper_info_dir", type=Path, default=DEFAULT_PAPER_INFO_DIR)
     parser.add_argument("--runs_dir", type=Path, default=BASE_DIR / "runs")
     parser.add_argument("--max_results", type=int, default=5000, help="Papers per automatic batch; fail-closed cap for explicit dates")

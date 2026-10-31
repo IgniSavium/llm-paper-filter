@@ -120,7 +120,7 @@ def create_client(args):
     return client
 
 
-def filter_papers(papers, llm, tokenizer, threshold=4):
+def filter_papers(papers, llm, tokenizer, threshold=5):
     """Compatibility helper; the CLI uses persistent per-model caches."""
     client = LocalClient(llm, tokenizer, getattr(tokenizer, 'name_or_path', 'local'))
     with tempfile.TemporaryDirectory(prefix='arxiv-local-evaluation-') as cache:
@@ -137,7 +137,8 @@ def translate_hits(hits, llm, tokenizer):
 def main(argv=None, default_model_path='./weights/Llama-3.3-70B-Instruct', default_quantization=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--date', help='Metadata date YYYY-MM-DD; default: yesterday UTC')
-    parser.add_argument('--threshold', type=int, choices=range(1, 6), default=4)
+    parser.add_argument('--threshold', type=int, choices=range(1, 6),
+                        help='arXiv requires 5; conference default: 4')
     parser.add_argument('--model_path', default=default_model_path)
     parser.add_argument('--tp_size', type=int, default=4)
     parser.add_argument('--gpu_util', type=float, default=0.90)
@@ -170,12 +171,15 @@ def main(argv=None, default_model_path='./weights/Llama-3.3-70B-Instruct', defau
     model_name = Path(args.model_path).name
     args.save_dir = args.save_dir or RUNS_DIR / f'{model_name}_runs'
     papers, date, metadata = load_filter_input(args)
+    conference = metadata.get('source') == 'openreview'
+    args.threshold = (args.threshold if args.threshold is not None else 4) if conference else 5
     digest = paper_info_digest(papers)
-    if reuse_completed_input(args.save_dir, date, papers):
+    if reuse_completed_input(args.save_dir, date, papers, minimum_threshold=None if conference else 5):
         return
     if papers:
         from daily_arxiv.reporting.artifacts import prior_paper_results, completed_date_threshold
-        args.threshold = completed_date_threshold(args.save_dir, date, args.threshold)
+        if conference:
+            args.threshold = completed_date_threshold(args.save_dir, date, args.threshold)
         prior = prior_paper_results(args.save_dir, papers)
         client = create_client(args) if needs_inference(papers, prior, args.threshold) else None
         papers, translated = run_filter(papers, client, args.cache_dir or args.save_dir / '.local_cache',
