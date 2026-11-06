@@ -169,15 +169,29 @@
       "submitted_estimated": false,
       "display_accepted": 5290,
       "display_submitted": 21575
-    }
-  ],
-  "missing_acceptance_rates": [
+    },
     {
       "conference": "NeurIPS",
-      "year": 2026
+      "year": 2026,
+      "accepted": 7900,
+      "submitted": 30709,
+      "rate_percent": 25.725357387085218,
+      "rate_basis": "reported_counts",
+      "source_url": "https://www1.cs.ucr.edu/news/2026/10/23/first-attack-privacy-preserving-llm-based-insights-systems",
+      "source_title": "UC Riverside CSE: NeurIPS 2026 Main Track decision statistics",
+      "supporting_source_urls": [
+        "https://dm.cs.univie.ac.at/news/story/four-papers-accepted-at-neurips-2026"
+      ],
+      "source_note": "主赛道数据来自加州大学河滨分校公告，并与维也纳大学公告交叉核对；NeurIPS 2026 官方 Fact Sheet 尚未发布。",
+      "verified_on": "2026-11-06",
+      "accepted_count_basis": "reported",
+      "submitted_estimated": false,
+      "display_accepted": 7900,
+      "display_submitted": 30709
     }
   ],
-  "generated_at": "2026-11-01T01:04:07+08:00",
+  "missing_acceptance_rates": [],
+  "generated_at": "2026-11-06T22:57:19+08:00",
   "denominator": "All scored papers in the same conference/year/status",
   "score": 5,
   "metrics": {
