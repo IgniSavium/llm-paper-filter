@@ -265,7 +265,10 @@ The HTML embeds its charts and data for offline use and follows the daily reader
 light/dark themes. It shows two vertically aligned charts: direction-specific counts/shares above
 and total accepted/submitted papers below. The submission toggle controls both. The lower chart also switches to official
 acceptance rates, using the sourced records in `acceptance_statistics.json` rather
-than dividing local accepted snapshots by unrelated submission totals. Missing
+than dividing local accepted snapshots by unrelated submission totals. NeurIPS 2026 main-track
+counts (7,900 accepted / 30,709 valid submissions; 25.7%) are attributed to a
+UC Riverside CSE announcement and cross-checked against the University of Vienna;
+they are labeled as an institutional report pending the official Fact Sheet. Missing
 verified rates and undecided ICLR 2027 submissions remain blank. The rate view
 provides source links and labels each point with its percentage and official
 accepted/submitted counts. Missing submitted counts are estimated as accepted

@@ -221,7 +221,7 @@ def csv_text(rows):
 
 
 def load_acceptance_statistics():
-    """Keep official decision statistics separate from local snapshot counts."""
+    """Keep sourced decision statistics separate from local snapshot counts."""
     from urllib.parse import urlparse
     statistics = json.loads(Path(__file__).with_name('acceptance_statistics.json').read_text())['statistics']
     seen = set()
@@ -233,17 +233,19 @@ def load_acceptance_statistics():
         rate = item['rate_percent']
         if not isinstance(rate, (int, float)) or not 0 <= rate <= 100:
             raise ValueError('Invalid acceptance rate')
-        if item['rate_basis'] == 'official_counts':
+        if item['rate_basis'] in ('official_counts', 'reported_counts'):
             accepted, submitted = item['accepted'], item['submitted']
             if type(accepted) is not int or type(submitted) is not int or not 0 <= accepted <= submitted or not submitted:
-                raise ValueError('Invalid official acceptance counts')
+                raise ValueError('Invalid acceptance counts')
             if abs(rate - accepted / submitted * 100) > 1e-9:
-                raise ValueError('Official rate does not match its own counts')
+                raise ValueError('Acceptance rate does not match its own counts')
         elif item['rate_basis'] != 'official_reported_rate':
             raise ValueError('Unknown acceptance rate basis')
         source = urlparse(item['source_url'])
-        if source.scheme != 'https' or source.hostname not in ('media.iclr.cc', 'media.icml.cc', 'media.neurips.cc'):
-            raise ValueError('An official conference source is required')
+        allowed_hosts = (('www1.cs.ucr.edu',) if item['rate_basis'] == 'reported_counts'
+                         else ('media.iclr.cc', 'media.icml.cc', 'media.neurips.cc'))
+        if source.scheme != 'https' or source.hostname not in allowed_hosts:
+            raise ValueError('A verified conference or institutional source is required')
     return statistics
 
 
@@ -275,7 +277,8 @@ def complete_acceptance_counts(statistics, rows):
         identity = (item['conference'], item['year'])
         numerator = item['accepted'] if item['accepted'] is not None else local.get(identity)
         denominator = item['submitted']
-        item['accepted_count_basis'] = 'official' if item['accepted'] is not None else 'local_snapshot'
+        item['accepted_count_basis'] = ('reported' if item['rate_basis'] == 'reported_counts'
+                                        else 'official') if item['accepted'] is not None else 'local_snapshot'
         item['submitted_estimated'] = denominator is None
         if denominator is None:
             if numerator is None or item['rate_percent'] <= 0:

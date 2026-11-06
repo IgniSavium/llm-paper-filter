@@ -1,5 +1,5 @@
 {
-  "description": "Official conference rates, or accepted/submitted using official counts. Never divided by local snapshot counts. Counts and rounding follow each official source.",
+  "description": "Conference acceptance rates from official sources or explicitly attributed institutional reports. Never divided by local snapshot counts. Counts and rounding follow each source.",
   "statistics": [
     {
       "conference": "ICLR",
@@ -110,6 +110,21 @@
       "source_url": "https://media.neurips.cc/Conferences/NeurIPS2025/press/NeurIPS2025-Fact_Sheet.pdf",
       "source_title": "NeurIPS 2025 Official Fact Sheet",
       "verified_on": "2026-10-16"
+    },
+    {
+      "conference": "NeurIPS",
+      "year": 2026,
+      "accepted": 7900,
+      "submitted": 30709,
+      "rate_percent": 25.725357387085218,
+      "rate_basis": "reported_counts",
+      "source_url": "https://www1.cs.ucr.edu/news/2026/10/23/first-attack-privacy-preserving-llm-based-insights-systems",
+      "source_title": "UC Riverside CSE: NeurIPS 2026 Main Track decision statistics",
+      "supporting_source_urls": [
+        "https://dm.cs.univie.ac.at/news/story/four-papers-accepted-at-neurips-2026"
+      ],
+      "source_note": "主赛道数据来自加州大学河滨分校公告，并与维也纳大学公告交叉核对；NeurIPS 2026 官方 Fact Sheet 尚未发布。",
+      "verified_on": "2026-11-06"
     }
   ]
 }
